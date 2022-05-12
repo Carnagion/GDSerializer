@@ -20,7 +20,7 @@ namespace Godot.Serialization
         /// <summary>
         /// A <see cref="Dictionary{TKey,TValue}"/> of specialized <see cref="ISerializer"/>s for specific <see cref="Type"/>s. These serializers will be used by the <see cref="Serializer"/> when possible.
         /// </summary>
-        public static Dictionary<Type, ISerializer> Specialized
+        public Dictionary<Type, ISerializer> Specialized
         {
             get;
         } = new()
@@ -58,7 +58,7 @@ namespace Godot.Serialization
             Type type = instance.GetType();
             
             // Use a more specialized serializer if possible
-            ISerializer? serializer = Serializer.GetSpecialSerializerForType(type);
+            ISerializer? serializer = this.GetSpecialSerializerForType(type);
             if (serializer is not null)
             {
                 return serializer.Serialize(instance, context);
@@ -138,7 +138,7 @@ namespace Godot.Serialization
             type ??= Serializer.GetTypeToDeserialize(node) ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
             
             // Use a more specialized deserializer if possible
-            ISerializer? serializer = Serializer.GetSpecialSerializerForType(type);
+            ISerializer? serializer = this.GetSpecialSerializerForType(type);
             if (serializer is not null)
             {
                 return serializer.Deserialize(node, type);
@@ -161,6 +161,10 @@ namespace Godot.Serialization
                         {
                             throw new SerializationException(child, $"{type.GetDisplayName()}.{property.Name} has no 'set' accessor");
                         }
+                        if (!property.GetCustomAttribute<SerializeAttribute>()?.Serializable ?? false)
+                        {
+                            throw new SerializationException(child, $"Attempted to deserialize non-deserializable property {property.Name} in {type.GetDisplayName()}");
+                        }
                         property.SetValue(instance, this.Deserialize(child, property.PropertyType));
                         deserialized.Add(property);
                         continue;
@@ -170,6 +174,10 @@ namespace Godot.Serialization
                     FieldInfo? field = type.GetField(child.Name, Serializer.instanceBindingFlags);
                     if (field is not null)
                     {
+                        if (!field.GetCustomAttribute<SerializeAttribute>()?.Serializable ?? false)
+                        {
+                            throw new SerializationException(child, $"Attempted to deserialize non-deserializable field {field.Name} in {type.GetDisplayName()}");
+                        }
                         field.SetValue(instance, this.Deserialize(child, field.FieldType));
                         deserialized.Add(field);
                         continue;
@@ -185,14 +193,7 @@ namespace Godot.Serialization
                                               where attribute is not null && attribute.Serializable 
                                               select member))
                 {
-                    throw new SerializationException(node, $"One or more mandatory values of {type.GetDisplayName()} were not deserialized");
-                }
-                if (deserialized.ContainsAny(from member in members 
-                                             let attribute = member.GetCustomAttribute<SerializeAttribute>() 
-                                             where attribute is not null && !attribute.Serializable 
-                                             select member))
-                {
-                    throw new SerializationException(node, $"One or more non-(de)serializable values of {type.GetDisplayName()} were deserialized");
+                    throw new SerializationException(node, $"One or more mandatory properties or fields of {type.GetDisplayName()} were not deserialized");
                 }
 
                 return instance;
@@ -225,33 +226,32 @@ namespace Godot.Serialization
                 .FirstOrDefault();
         }
 
-        private static ISerializer? GetSpecialSerializerForType(Type type)
+        private ISerializer? GetSpecialSerializerForType(Type type)
         {
             ISerializer? serializer;
             if (type.IsGenericType)
             {
-                serializer = Serializer.Specialized.GetValueOrDefault(type);
+                serializer = this.Specialized.GetValueOrDefault(type);
                 if (serializer is not null)
                 {
                     return serializer;
                 }
-                Type? match = Serializer.Specialized.Keys
+                Type? match = this.Specialized.Keys
                     .FirstOrDefault(type.IsExactlyGenericType);
                 if (match is not null)
                 {
-                    return Serializer.Specialized[match];
+                    return this.Specialized[match];
                 }
-                match = Serializer.Specialized.Keys
+                match = this.Specialized.Keys
                     .FirstOrDefault(type.DerivesFromGenericType);
                 if (match is not null)
                 {
-                    return Serializer.Specialized[match];
+                    return this.Specialized[match];
                 }
             }
-            
             else
             {
-                Serializer.Specialized.TryGetValue(type, out serializer);
+                this.Specialized.TryGetValue(type, out serializer);
             }
             return serializer;
         }
