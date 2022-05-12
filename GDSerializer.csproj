@@ -1,0 +1,26 @@
+<Project Sdk="Godot.NET.Sdk/3.3.0">
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <RootNamespace>Godot.Serialization</RootNamespace>
+        <LangVersion>default</LangVersion>
+        <Nullable>enable</Nullable>
+        <!-- Workaround as Godot does not know how to properly load NuGet packages -->
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <DocumentationFile>.\.mono\temp\bin\Debug\GDSerializer.xml</DocumentationFile>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'ExportDebug' ">
+        <DocumentationFile>.\.mono\temp\bin\ExportDebug\GDSerializer.xml</DocumentationFile>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'ExportRelease' ">
+        <DocumentationFile>.\.mono\temp\bin\ExportRelease\GDSerializer.xml</DocumentationFile>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Carnagion.MoreLinq" Version="1.3.0" />
+        <PackageReference Include="System.CodeDom" Version="6.0.0" />
+    </ItemGroup>
+    <ItemGroup>
+      <Content Include=".gitignore" />
+    </ItemGroup>
+</Project>
