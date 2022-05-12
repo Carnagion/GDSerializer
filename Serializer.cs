@@ -10,10 +10,16 @@ using Godot.Serialization.Utility.Extensions;
 
 namespace Godot.Serialization
 {
+    /// <summary>
+    /// A default <see cref="ISerializer"/> implementation that allows configurable serializers for specific <see cref="Type"/>s.
+    /// </summary>
     public class Serializer : ISerializer
     {
         private const BindingFlags instanceBindingFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
 
+        /// <summary>
+        /// A <see cref="Dictionary{TKey,TValue}"/> of specialized <see cref="ISerializer"/>s for specific <see cref="Type"/>s. These serializers will be used by the <see cref="Serializer"/> when possible.
+        /// </summary>
         public static Dictionary<Type, ISerializer> Specialized
         {
             get;
@@ -40,6 +46,13 @@ namespace Godot.Serialization
             {typeof(Vector3), new VectorSerializer()},
         };
 
+        /// <summary>
+        /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
+        /// </summary>
+        /// <param name="instance">The <see cref="object"/> to serialize.</param>
+        /// <param name="context">The <see cref="XmlDocument"/> to use when creating new <see cref="XmlNode"/>s that will be returned as part of result.</param>
+        /// <returns>An <see cref="XmlNode"/> that represents <paramref name="instance"/> and the serializable data stored in it.</returns>
+        /// <exception cref="SerializationException">Thrown if <paramref name="instance"/> could not be serialized due to unexpected errors or invalid input.</exception>
         public virtual XmlNode Serialize(object instance, XmlDocument? context = null)
         {
             Type type = instance.GetType();
@@ -113,6 +126,13 @@ namespace Godot.Serialization
             }
         }
 
+        /// <summary>
+        /// Deserializes <paramref name="node"/> into an <see cref="object"/>.
+        /// </summary>
+        /// <param name="node">The <see cref="XmlNode"/> to deserialize.</param>
+        /// <param name="type">The <see cref="Type"/> of <see cref="object"/> to deserialize the node as, in case it is not apparent from <paramref name="node"/>'s attributes.</param>
+        /// <returns>An <see cref="object"/> that represents the serialized data stored in <paramref name="node"/>.</returns>
+        /// <exception cref="SerializationException">Thrown if a <see cref="Type"/> could not be inferred from <paramref name="node"/> or was invalid, an instance of the <see cref="Type"/> could not be created, <paramref name="node"/> contained invalid properties/fields, or <paramref name="node"/> could not be deserialized due to unexpected errors or invalid data.</exception>
         public virtual object Deserialize(XmlNode node, Type? type = null)
         {
             type ??= Serializer.GetTypeToDeserialize(node) ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
@@ -183,6 +203,12 @@ namespace Godot.Serialization
             }
         }
 
+        /// <summary>
+        /// Deserializes <paramref name="node"/> into an <see cref="object"/>.
+        /// </summary>
+        /// <param name="node">The <see cref="XmlNode"/> to deserialize.</param>
+        /// <typeparam name="T">The <see cref="Type"/> of <see cref="object"/> to deserialize <paramref name="node"/> as.</typeparam>
+        /// <returns>An <see cref="object"/> that represents the serialized data stored in <paramref name="node"/>.</returns>
         public T Deserialize<T>(XmlNode node)
         {
             return (T)this.Deserialize(node, typeof(T));

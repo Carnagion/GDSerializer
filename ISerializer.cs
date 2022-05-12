@@ -3,10 +3,25 @@ using System.Xml;
 
 namespace Godot.Serialization
 {
+    /// <summary>
+    /// Defines methods for XML (de)serialization.
+    /// </summary>
     public interface ISerializer
     {
+        /// <summary>
+        /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
+        /// </summary>
+        /// <param name="instance">The <see cref="object"/> to serialize.</param>
+        /// <param name="context">The <see cref="XmlDocument"/> to use when creating new <see cref="XmlNode"/>s that will be returned as part of result.</param>
+        /// <returns>An <see cref="XmlNode"/> that represents <paramref name="instance"/> and the serializable data stored in it.</returns>
         XmlNode Serialize(object instance, XmlDocument? context = null);
         
+        /// <summary>
+        /// Deserializes <paramref name="node"/> into an <see cref="object"/>.
+        /// </summary>
+        /// <param name="node">The <see cref="XmlNode"/> to deserialize.</param>
+        /// <param name="type">The <see cref="Type"/> of <see cref="object"/> to deserialize the node as, in case it is not apparent from <paramref name="node"/>'s attributes.</param>
+        /// <returns>An <see cref="object"/> that represents the serialized data stored in <paramref name="node"/>.</returns>
         object Deserialize(XmlNode node, Type? type = null);
     }
 }

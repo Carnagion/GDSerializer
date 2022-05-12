@@ -10,8 +10,18 @@ using Godot.Serialization.Utility.Extensions;
 
 namespace Godot.Serialization.Specialized
 {
+    /// <summary>
+    /// A (de)serializer for types that implement <see cref="ICollection{T}"/>.
+    /// </summary>
     public class CollectionSerializer : Serializer
     {
+        /// <summary>
+        /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
+        /// </summary>
+        /// <param name="instance">The <see cref="object"/> to serialize. It must implement <see cref="ICollection{T}"/>.</param>
+        /// <param name="context">The <see cref="XmlDocument"/> to use when creating new <see cref="XmlNode"/>s that will be returned as part of result.</param>
+        /// <returns>An <see cref="XmlNode"/> that represents <paramref name="instance"/> and the serializable data stored in it.</returns>
+        /// <exception cref="SerializationException">Thrown if <paramref name="instance"/> could not be serialized due to unexpected errors or invalid input.</exception>
         public override XmlNode Serialize(object instance, XmlDocument? context = null)
         {
             Type collectionType = instance.GetType();
@@ -41,6 +51,13 @@ namespace Godot.Serialization.Specialized
             }
         }
 
+        /// <summary>
+        /// Deserializes <paramref name="node"/> into an <see cref="object"/>.
+        /// </summary>
+        /// <param name="node">The <see cref="XmlNode"/> to deserialize.</param>
+        /// <param name="collectionType">The <see cref="Type"/> of <see cref="object"/> to deserialize the node as. It must implement <see cref="ICollection{T}"/>.</param>
+        /// <returns>An <see cref="object"/> that represents the serialized data stored in <paramref name="node"/>.</returns>
+        /// <exception cref="SerializationException">Thrown if <paramref name="node"/> could not be deserialized due to unexpected errors or invalid input.</exception>
         public override object Deserialize(XmlNode node, Type? collectionType = null)
         {
             if (collectionType is null)

@@ -7,10 +7,20 @@ using Godot.Serialization.Utility.Extensions;
 
 namespace Godot.Serialization.Specialized
 {
+    /// <summary>
+    /// A (de)serializer for <see cref="string"/>, <see cref="char"/>, <see cref="bool"/>, and all the numeric types (<see cref="int"/>, <see cref="float"/>, etc).
+    /// </summary>
     public class SimpleSerializer : ISerializer
     {
         private static readonly Type[] simpleTypes = {typeof(string), typeof(char), typeof(bool), typeof(sbyte), typeof(byte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(float), typeof(double), typeof(decimal),};
         
+        /// <summary>
+        /// Serializes the simple type <paramref name="instance"/> into an <see cref="XmlNode"/>.
+        /// </summary>
+        /// <param name="instance">The <see cref="object"/> to serialize. Its <see cref="Type"/> must be one of <see cref="string"/>, <see cref="char"/>, <see cref="bool"/>, or the numeric types(<see cref="int"/>, <see cref="float"/>, etc).</param>
+        /// <param name="context">The <see cref="XmlDocument"/> to use when creating new <see cref="XmlNode"/>s that will be returned as part of result.</param>
+        /// <returns>An <see cref="XmlNode"/> that represents <paramref name="instance"/> and the serializable data stored in it.</returns>
+        /// <exception cref="SerializationException">Thrown if <paramref name="instance"/>'s <see cref="Type"/> is not a simple type.</exception>
         public XmlNode Serialize(object instance, XmlDocument? context = null)
         {
             Type type = instance.GetType();
@@ -25,6 +35,13 @@ namespace Godot.Serialization.Specialized
             return element;
         }
 
+        /// <summary>
+        /// Deserializes <paramref name="node"/> into a simple type.
+        /// </summary>
+        /// <param name="node">The <see cref="XmlNode"/> to deserialize.</param>
+        /// <param name="type">The <see cref="Type"/> of <see cref="object"/> to deserialize the node as. It must be one of <see cref="string"/>, <see cref="char"/>, <see cref="bool"/>, or the numeric types(<see cref="int"/>, <see cref="float"/>, etc).</param>
+        /// <returns>An <see cref="object"/> that represents the serialized data stored in <paramref name="node"/>.</returns>
+        /// <exception cref="SerializationException">Thrown if <paramref name="type"/> is not a simple type.</exception>
         public object Deserialize(XmlNode node, Type? type = null)
         {
             if (!node.HasChildNodes)
