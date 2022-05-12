@@ -21,6 +21,6 @@
         <PackageReference Include="System.CodeDom" Version="6.0.0" />
     </ItemGroup>
     <ItemGroup>
-      <Content Include=".gitignore" />
+        <Content Include=".gitignore" />
     </ItemGroup>
 </Project>
