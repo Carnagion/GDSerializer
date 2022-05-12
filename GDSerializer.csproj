@@ -12,6 +12,7 @@
         <Authors>Carnagion</Authors>
         <Description>An XML (de)serialization framework for Godot's C# API.</Description>
         <RepositoryUrl>https://github.com/Carnagion/GDSerializer</RepositoryUrl>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
         <DocumentationFile>.\.mono\temp\bin\Debug\GDSerializer.xml</DocumentationFile>
@@ -29,6 +30,7 @@
     <ItemGroup>
         <Content Include=".gitignore" />
         <Content Include="LICENSE" />
-        <Content Include="README.Md" />
+        <Content Include="README.md" />
+        <None Include="LICENSE" Pack="true" PackagePath="" />
     </ItemGroup>
 </Project>
