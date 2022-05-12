@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Xml;
 
+using Godot.Serialization.Specialized;
 using Godot.Serialization.Utility.Exceptions;
 using Godot.Serialization.Utility.Extensions;
 
@@ -16,7 +17,28 @@ namespace Godot.Serialization
         public static Dictionary<Type, ISerializer> Specialized
         {
             get;
-        } = new();
+        } = new()
+        {
+            {typeof(string), new SimpleSerializer()},
+            {typeof(char), new SimpleSerializer()},
+            {typeof(bool), new SimpleSerializer()},
+            {typeof(sbyte), new SimpleSerializer()},
+            {typeof(byte), new SimpleSerializer()},
+            {typeof(short), new SimpleSerializer()},
+            {typeof(ushort), new SimpleSerializer()},
+            {typeof(int), new SimpleSerializer()},
+            {typeof(uint), new SimpleSerializer()},
+            {typeof(long), new SimpleSerializer()},
+            {typeof(ulong), new SimpleSerializer()},
+            {typeof(float), new SimpleSerializer()},
+            {typeof(double), new SimpleSerializer()},
+            {typeof(decimal), new SimpleSerializer()},
+            {typeof(IDictionary<,>), new DictionarySerializer()},
+            {typeof(ICollection<>), new CollectionSerializer()},
+            {typeof(IEnumerable<>), new EnumerableSerializer()},
+            {typeof(Vector2), new VectorSerializer()},
+            {typeof(Vector3), new VectorSerializer()},
+        };
 
         public virtual XmlNode Serialize(object instance, XmlDocument? context = null)
         {
