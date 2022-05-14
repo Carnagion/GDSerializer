@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Xml;
 
 using Godot.Serialization.Specialized;
+using Godot.Serialization.Utility;
 using Godot.Serialization.Utility.Exceptions;
 using Godot.Serialization.Utility.Extensions;
 
@@ -18,12 +19,12 @@ namespace Godot.Serialization
         private const BindingFlags instanceBindingFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
 
         /// <summary>
-        /// A <see cref="Dictionary{TKey,TValue}"/> of specialized <see cref="ISerializer"/>s for specific <see cref="Type"/>s. These serializers will be used by the <see cref="Serializer"/> when possible.
+        /// An <see cref="OrderedDictionary{TKey,TValue}"/> of specialized <see cref="ISerializer"/>s for specific <see cref="Type"/>s. These serializers will be used by the <see cref="Serializer"/> when possible.
         /// </summary>
-        public Dictionary<Type, ISerializer> Specialized
+        public static OrderedDictionary<Type, ISerializer> Specialized // Must be static; making it instance will cause a stack overflow due to it being recursively created in inheriting classes
         {
             get;
-        } = new()
+        } = new(19)
         {
             {typeof(string), new SimpleSerializer()},
             {typeof(char), new SimpleSerializer()},
@@ -58,7 +59,7 @@ namespace Godot.Serialization
             Type type = instance.GetType();
             
             // Use a more specialized serializer if possible
-            ISerializer? serializer = this.GetSpecialSerializerForType(type);
+            ISerializer? serializer = Serializer.GetSpecialSerializerForType(type);
             if (serializer is not null)
             {
                 return serializer.Serialize(instance, context);
@@ -138,7 +139,7 @@ namespace Godot.Serialization
             type ??= Serializer.GetTypeToDeserialize(node) ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
             
             // Use a more specialized deserializer if possible
-            ISerializer? serializer = this.GetSpecialSerializerForType(type);
+            ISerializer? serializer = Serializer.GetSpecialSerializerForType(type);
             if (serializer is not null)
             {
                 return serializer.Deserialize(node, type);
@@ -226,32 +227,32 @@ namespace Godot.Serialization
                 .FirstOrDefault();
         }
 
-        private ISerializer? GetSpecialSerializerForType(Type type)
+        private static ISerializer? GetSpecialSerializerForType(Type type)
         {
             ISerializer? serializer;
             if (type.IsGenericType)
             {
-                serializer = this.Specialized.GetValueOrDefault(type);
+                serializer = Serializer.Specialized.GetValueOrDefault(type);
                 if (serializer is not null)
                 {
                     return serializer;
                 }
-                Type? match = this.Specialized.Keys
+                Type? match = Serializer.Specialized.Keys
                     .FirstOrDefault(type.IsExactlyGenericType);
                 if (match is not null)
                 {
-                    return this.Specialized[match];
+                    return Serializer.Specialized[match];
                 }
-                match = this.Specialized.Keys
+                match = Serializer.Specialized.Keys
                     .FirstOrDefault(type.DerivesFromGenericType);
                 if (match is not null)
                 {
-                    return this.Specialized[match];
+                    return Serializer.Specialized[match];
                 }
             }
             else
             {
-                this.Specialized.TryGetValue(type, out serializer);
+                Serializer.Specialized.TryGetValue(type, out serializer);
             }
             return serializer;
         }
