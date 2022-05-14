@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Xml;
 
 using Godot.Serialization.Specialized;
+using Godot.Serialization.Utility;
 using Godot.Serialization.Utility.Exceptions;
 using Godot.Serialization.Utility.Extensions;
 
@@ -20,7 +21,7 @@ namespace Godot.Serialization
         /// <summary>
         /// A <see cref="Dictionary{TKey,TValue}"/> of specialized <see cref="ISerializer"/>s for specific <see cref="Type"/>s. These serializers will be used by the <see cref="Serializer"/> when possible.
         /// </summary>
-        public static Dictionary<Type, ISerializer> Specialized // Must be static; making it instance will cause a stack overflow due to it being recursively created in inheriting classes
+        public static OrderedDictionary<Type, ISerializer> Specialized // Must be static; making it instance will cause a stack overflow due to it being recursively created in inheriting classes
         {
             get;
         } = new(19)
