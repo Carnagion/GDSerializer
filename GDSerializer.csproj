@@ -1,18 +1,18 @@
 <Project Sdk="Godot.NET.Sdk/3.3.0">
     <PropertyGroup>
-        <TargetFramework>netstandard2.1</TargetFramework>
         <RootNamespace>Godot.Serialization</RootNamespace>
         <LangVersion>default</LangVersion>
         <Nullable>enable</Nullable>
         <!-- Workaround as Godot does not know how to properly load NuGet packages -->
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <PackageVersion>0.1.1</PackageVersion>
+        <PackageVersion>0.1.2</PackageVersion>
         <Title>GDSerializer</Title>
         <Authors>Carnagion</Authors>
         <Description>An XML (de)serialization framework for Godot's C# API.</Description>
         <RepositoryUrl>https://github.com/Carnagion/GDSerializer</RepositoryUrl>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <TargetFramework>netstandard2.1</TargetFramework>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
         <DocumentationFile>.\.mono\temp\bin\Debug\GDSerializer.xml</DocumentationFile>
