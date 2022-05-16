@@ -23,12 +23,12 @@ namespace Godot.Serialization.Specialized
         /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
         /// </summary>
         /// <param name="instance">The <see cref="object"/> to serialize. It must be a <see cref="Vector2"/> or <see cref="Vector3"/>.</param>
-        /// <param name="context">The <see cref="XmlDocument"/> to use when creating new <see cref="XmlNode"/>s that will be returned as part of result.</param>
+        /// <param name="vectorType">The <see cref="Type"/> to serialize <paramref name="instance"/> as. This parameter is ignored by <see cref="VectorSerializer"/>.</param>
         /// <returns>An <see cref="XmlNode"/> that represents <paramref name="instance"/> and the serializable data stored in it.</returns>
         /// <exception cref="SerializationException">Thrown if <paramref name="instance"/> is not a <see cref="Vector2"/> or <see cref="Vector3"/>.</exception>
-        public XmlNode Serialize(object instance, XmlDocument? context = null)
+        public XmlNode Serialize(object instance, Type? vectorType = null)
         {
-            context ??= new();
+            XmlDocument context = new();
             switch (instance)
             {
                 case Vector2 vector2:

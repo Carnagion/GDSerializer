@@ -84,22 +84,6 @@ namespace Godot.Serialization.Utility
             }
         }
 
-        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys
-        {
-            get
-            {
-                return this.Keys;
-            }
-        }
-
-        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values
-        {
-            get
-            {
-                return this.Values;
-            }
-        }
-
         bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly
         {
             get
