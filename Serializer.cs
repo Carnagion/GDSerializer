@@ -21,7 +21,7 @@ namespace Godot.Serialization
         /// <summary>
         /// An <see cref="OrderedDictionary{TKey,TValue}"/> of specialized <see cref="ISerializer"/>s for specific <see cref="Type"/>s. These serializers will be used by the <see cref="Serializer"/> when possible.
         /// </summary>
-        public static OrderedDictionary<Type, ISerializer> Specialized // Must be static; making it instance will cause a stack overflow due to it being recursively created in inheriting classes
+        public static OrderedDictionary<Type, ISerializer> Specialized // Must be static since other serializers create new Serializer instances, and they all need access to the same dictionary
         {
             get;
         } = new(19)
