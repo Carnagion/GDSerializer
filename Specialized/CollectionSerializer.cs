@@ -19,29 +19,31 @@ namespace Godot.Serialization.Specialized
         /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
         /// </summary>
         /// <param name="instance">The <see cref="object"/> to serialize. It must implement <see cref="ICollection{T}"/>.</param>
-        /// <param name="context">The <see cref="XmlDocument"/> to use when creating new <see cref="XmlNode"/>s that will be returned as part of result.</param>
+        /// <param name="collectionType">The <see cref="Type"/> to serialize <paramref name="instance"/> as.</param>
         /// <returns>An <see cref="XmlNode"/> that represents <paramref name="instance"/> and the serializable data stored in it.</returns>
         /// <exception cref="SerializationException">Thrown if <paramref name="instance"/> could not be serialized due to unexpected errors or invalid input.</exception>
-        public override XmlNode Serialize(object instance, XmlDocument? context = null)
+        public override XmlNode Serialize(object instance, Type? collectionType = null)
         {
-            Type collectionType = instance.GetType();
+            collectionType ??= instance.GetType();
             if (!collectionType.DerivesFromGenericType(typeof(ICollection<>)))
             {
                 throw new SerializationException(instance, $"\"{collectionType.GetDisplayName()}\" cannot be (de)serialized by {typeof(CollectionSerializer).GetDisplayName()}");
             }
-
+            
             try
             {
-                context ??= new();
+                Type itemType = collectionType.GenericTypeArguments[0];
+                
+                XmlDocument context = new();
                 XmlElement collectionElement = context.CreateElement("Collection");
                 collectionElement.SetAttribute("Type", collectionType.FullName);
                 foreach (object item in (IEnumerable)instance)
                 {
                     XmlElement itemElement = context.CreateElement("item");
-                    base.Serialize(item, context).ChildNodes
+                    base.Serialize(item, itemType).ChildNodes
                         .Cast<XmlNode>()
                         .ForEach(node => itemElement.AppendChild(node));
-                    collectionElement.AppendChild(itemElement);
+                    collectionElement.AppendChild(context.ImportNode(itemElement, true));
                 }
                 return collectionElement;
             }
@@ -60,11 +62,7 @@ namespace Godot.Serialization.Specialized
         /// <exception cref="SerializationException">Thrown if <paramref name="node"/> could not be deserialized due to unexpected errors or invalid input.</exception>
         public override object Deserialize(XmlNode node, Type? collectionType = null)
         {
-            if (collectionType is null)
-            {
-                throw new SerializationException(node, $"{nameof(Type)} not provided");
-            }
-
+            collectionType ??= CollectionSerializer.GetTypeToDeserialize(node) ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
             if (!collectionType.DerivesFromGenericType(typeof(ICollection<>)))
             {
                 throw new SerializationException(node, $"\"{collectionType.GetDisplayName()}\" cannot be (de)serialized by {typeof(CollectionSerializer).GetDisplayName()}");

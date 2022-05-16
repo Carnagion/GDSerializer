@@ -51,23 +51,23 @@ namespace Godot.Serialization
         /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
         /// </summary>
         /// <param name="instance">The <see cref="object"/> to serialize.</param>
-        /// <param name="context">The <see cref="XmlDocument"/> to use when creating new <see cref="XmlNode"/>s that will be returned as part of result.</param>
+        /// <param name="type">The <see cref="Type"/> to serialize <paramref name="instance"/> as, in case it is different from <paramref name="instance"/>'s <see cref="Type"/>.</param>
         /// <returns>An <see cref="XmlNode"/> that represents <paramref name="instance"/> and the serializable data stored in it.</returns>
         /// <exception cref="SerializationException">Thrown if <paramref name="instance"/> could not be serialized due to unexpected errors or invalid input.</exception>
-        public virtual XmlNode Serialize(object instance, XmlDocument? context = null)
+        public virtual XmlNode Serialize(object instance, Type? type = null)
         {
-            Type type = instance.GetType();
+            type ??= instance.GetType();
             
             // Use a more specialized serializer if possible
             ISerializer? serializer = Serializer.GetSpecialSerializerForType(type);
             if (serializer is not null)
             {
-                return serializer.Serialize(instance, context);
+                return serializer.Serialize(instance, type);
             }
 
             try
             {
-                context ??= new();
+                XmlDocument context = new();
                 XmlElement element;
                 // Use the "Type" attribute if generic or nested type as ` and + are not allowed as XML node names
                 if (type.IsGenericType)
@@ -96,9 +96,9 @@ namespace Godot.Serialization
                         continue;
                     }
                     XmlNode node = context.CreateElement(property.Name);
-                    this.Serialize(value, context).ChildNodes
+                    this.Serialize(value, property.PropertyType).ChildNodes
                         .Cast<XmlNode>()
-                        .ForEach(child => node.AppendChild(child));
+                        .ForEach(child => node.AppendChild(context.ImportNode(child, true)));
                     element.AppendChild(node);
                 }
                 
@@ -113,9 +113,9 @@ namespace Godot.Serialization
                         continue;
                     }
                     XmlNode node= context.CreateElement(field.Name);
-                    this.Serialize(value, context).ChildNodes
+                    this.Serialize(value, field.FieldType).ChildNodes
                         .Cast<XmlNode>()
-                        .ForEach(child => node.AppendChild(child));
+                        .ForEach(child => node.AppendChild(context.ImportNode(child, true)));
                     element.AppendChild(node);
                 }
 
@@ -128,14 +128,30 @@ namespace Godot.Serialization
         }
 
         /// <summary>
+        /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
+        /// </summary>
+        /// <param name="instance">The <see cref="object"/> to serialize.</param>
+        /// <typeparam name="T">The <see cref="Type"/> to serialize <paramref name="instance"/> as.</typeparam>
+        /// <returns>An <see cref="XmlNode"/> that represents <paramref name="instance"/> and the serializable data stored in it.</returns>
+        public XmlNode Serialize<T>(T instance) where T : notnull
+        {
+            return this.Serialize(instance, typeof(T));
+        }
+
+        /// <summary>
         /// Deserializes <paramref name="node"/> into an <see cref="object"/>.
         /// </summary>
         /// <param name="node">The <see cref="XmlNode"/> to deserialize.</param>
         /// <param name="type">The <see cref="Type"/> of <see cref="object"/> to deserialize the node as, in case it is not apparent from <paramref name="node"/>'s attributes.</param>
         /// <returns>An <see cref="object"/> that represents the serialized data stored in <paramref name="node"/>.</returns>
         /// <exception cref="SerializationException">Thrown if a <see cref="Type"/> could not be inferred from <paramref name="node"/> or was invalid, an instance of the <see cref="Type"/> could not be created, <paramref name="node"/> contained invalid properties/fields, or <paramref name="node"/> could not be deserialized due to unexpected errors or invalid data.</exception>
-        public virtual object Deserialize(XmlNode node, Type? type = null)
+        public virtual object? Deserialize(XmlNode node, Type? type = null)
         {
+            if (node.Attributes?["Null"]?.InnerText is "True")
+            {
+                return null;
+            }
+            
             type ??= Serializer.GetTypeToDeserialize(node) ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
             
             // Use a more specialized deserializer if possible
@@ -211,12 +227,17 @@ namespace Godot.Serialization
         /// <param name="node">The <see cref="XmlNode"/> to deserialize.</param>
         /// <typeparam name="T">The <see cref="Type"/> of <see cref="object"/> to deserialize <paramref name="node"/> as.</typeparam>
         /// <returns>An <see cref="object"/> that represents the serialized data stored in <paramref name="node"/>.</returns>
-        public T Deserialize<T>(XmlNode node)
+        public T? Deserialize<T>(XmlNode node)
         {
-            return (T)this.Deserialize(node, typeof(T));
+            return (T?)this.Deserialize(node, typeof(T));
         }
-
-        private static Type? GetTypeToDeserialize(XmlNode node)
+        
+        /// <summary>
+        /// Tries to find a suitable <see cref="Type"/> to deserialize <paramref name="node"/> as.
+        /// </summary>
+        /// <param name="node">The <see cref="XmlNode"/> to deserialize.</param>
+        /// <returns>The <see cref="Type"/> of the serialized data in <paramref name="node"/>, or <see langword="null"/> if no suitable <see cref="Type"/> was found.</returns>
+        protected static Type? GetTypeToDeserialize(XmlNode node)
         {
             string name = (node.Attributes?["Type"]?.InnerText ?? node.Name)
                 .Replace("&lt;", "<")

@@ -18,19 +18,19 @@ namespace Godot.Serialization.Specialized
         /// Serializes the simple type <paramref name="instance"/> into an <see cref="XmlNode"/>.
         /// </summary>
         /// <param name="instance">The <see cref="object"/> to serialize. Its <see cref="Type"/> must be one of <see cref="string"/>, <see cref="char"/>, <see cref="bool"/>, or the numeric types(<see cref="int"/>, <see cref="float"/>, etc).</param>
-        /// <param name="context">The <see cref="XmlDocument"/> to use when creating new <see cref="XmlNode"/>s that will be returned as part of result.</param>
+        /// <param name="type">The <see cref="Type"/> to serialize <paramref name="instance"/> as, in case it is different from <paramref name="instance"/>'s <see cref="Type"/>.</param>
         /// <returns>An <see cref="XmlNode"/> that represents <paramref name="instance"/> and the serializable data stored in it.</returns>
         /// <exception cref="SerializationException">Thrown if <paramref name="instance"/>'s <see cref="Type"/> is not a simple type.</exception>
-        public XmlNode Serialize(object instance, XmlDocument? context = null)
+        public XmlNode Serialize(object instance, Type? type = null)
         {
-            Type type = instance.GetType();
+            type ??= instance.GetType();
             if (!SimpleSerializer.simpleTypes.Contains(type))
             {
                 throw new SerializationException(instance, $"\"{type.GetDisplayName()}\" is not a suitable {nameof(Type)} for {typeof(SimpleSerializer).GetDisplayName()}");
             }
 
-            context ??= new();
-            XmlElement element = context.CreateElement(type.GetDisplayName()!);
+            XmlDocument context = new();
+            XmlElement element = context.CreateElement(type.GetDisplayName());
             element.AppendChild(context.CreateTextNode(instance.ToString()));
             return element;
         }

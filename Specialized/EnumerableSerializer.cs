@@ -18,12 +18,12 @@ namespace Godot.Serialization.Specialized
         /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
         /// </summary>
         /// <param name="instance">The <see cref="object"/> to serialize. Its <see cref="Type"/> must be exactly <see cref="IEnumerable{T}"/>.</param>
-        /// <param name="context">The <see cref="XmlDocument"/> to use when creating new <see cref="XmlNode"/>s that will be returned as part of result.</param>
+        /// <param name="enumerableType">The <see cref="Type"/> to serialize <paramref name="instance"/> as.</param>
         /// <returns>An <see cref="XmlNode"/> that represents <paramref name="instance"/> and the serializable data stored in it.</returns>
         /// <exception cref="SerializationException">Thrown if <paramref name="instance"/> could not be serialized due to unexpected errors or invalid input.</exception>
-        public override XmlNode Serialize(object instance, XmlDocument? context = null)
+        public override XmlNode Serialize(object instance, Type? enumerableType = null)
         {
-            Type enumerableType = instance.GetType();
+            enumerableType ??= instance.GetType();
             if (!enumerableType.IsExactlyGenericType(typeof(IEnumerable<>)))
             {
                 throw new SerializationException(instance, $"\"{enumerableType.GetDisplayName()}\" cannot be (de)serialized by {typeof(EnumerableSerializer).GetDisplayName()}");
@@ -31,15 +31,17 @@ namespace Godot.Serialization.Specialized
 
             try
             {
-                context ??= new();
+                Type itemType = enumerableType.GenericTypeArguments[0];
+                
+                XmlDocument context = new();
                 XmlElement enumerableElement = context.CreateElement("Enumerable");
                 enumerableElement.SetAttribute("Type", enumerableType.FullName);
                 foreach (object item in (IEnumerable)instance)
                 {
                     XmlElement itemElement = context.CreateElement("item");
-                    base.Serialize(item, context).ChildNodes
+                    base.Serialize(item, itemType).ChildNodes
                         .Cast<XmlNode>()
-                        .ForEach(node => itemElement.AppendChild(node));
+                        .ForEach(node => itemElement.AppendChild(context.ImportNode(node, true)));
                     enumerableElement.AppendChild(itemElement);
                 }
                 return enumerableElement;
@@ -59,11 +61,7 @@ namespace Godot.Serialization.Specialized
         /// <exception cref="SerializationException">Thrown if <paramref name="node"/> could not be deserialized due to unexpected errors or invalid input.</exception>
         public override object Deserialize(XmlNode node, Type? enumerableType = null)
         {
-            if (enumerableType is null)
-            {
-                throw new SerializationException(node, $"{nameof(Type)} not provided");
-            }
-
+            enumerableType ??= EnumerableSerializer.GetTypeToDeserialize(node) ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
             if (!enumerableType.IsExactlyGenericType(typeof(IEnumerable<>)))
             {
                 throw new SerializationException(node, $"\"{enumerableType.GetDisplayName()}\" cannot be (de)serialized by {typeof(EnumerableSerializer).GetDisplayName()}");
