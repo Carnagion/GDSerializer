@@ -21,7 +21,7 @@ namespace Godot.Serialization
         /// <summary>
         /// An <see cref="OrderedDictionary{TKey,TValue}"/> of specialized <see cref="ISerializer"/>s for specific <see cref="Type"/>s. These serializers will be used by the <see cref="Serializer"/> when possible.
         /// </summary>
-        public static OrderedDictionary<Type, ISerializer> Specialized // Must be static; making it instance will cause a stack overflow due to it being recursively created in inheriting classes
+        public OrderedDictionary<Type, ISerializer> Specialized
         {
             get;
         } = new(19)
@@ -59,7 +59,7 @@ namespace Godot.Serialization
             type ??= instance.GetType();
             
             // Use a more specialized serializer if possible
-            ISerializer? serializer = Serializer.GetSpecialSerializerForType(type);
+            ISerializer? serializer = this.GetSpecialSerializerForType(type);
             if (serializer is not null)
             {
                 return serializer.Serialize(instance, type);
@@ -155,7 +155,7 @@ namespace Godot.Serialization
             type ??= node.GetTypeToDeserialize() ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
             
             // Use a more specialized deserializer if possible
-            ISerializer? serializer = Serializer.GetSpecialSerializerForType(type);
+            ISerializer? serializer = this.GetSpecialSerializerForType(type);
             if (serializer is not null)
             {
                 return serializer.Deserialize(node, type);
@@ -232,32 +232,32 @@ namespace Godot.Serialization
             return (T?)this.Deserialize(node, typeof(T));
         }
 
-        private static ISerializer? GetSpecialSerializerForType(Type type)
+        private ISerializer? GetSpecialSerializerForType(Type type)
         {
             ISerializer? serializer;
             if (type.IsGenericType)
             {
-                serializer = Serializer.Specialized.GetValueOrDefault(type);
+                serializer = this.Specialized.GetValueOrDefault(type);
                 if (serializer is not null)
                 {
                     return serializer;
                 }
-                Type? match = Serializer.Specialized.Keys
+                Type? match = this.Specialized.Keys
                     .FirstOrDefault(type.IsExactlyGenericType);
                 if (match is not null)
                 {
-                    return Serializer.Specialized[match];
+                    return this.Specialized[match];
                 }
-                match = Serializer.Specialized.Keys
+                match = this.Specialized.Keys
                     .FirstOrDefault(type.DerivesFromGenericType);
                 if (match is not null)
                 {
-                    return Serializer.Specialized[match];
+                    return this.Specialized[match];
                 }
             }
             else
             {
-                Serializer.Specialized.TryGetValue(type, out serializer);
+                this.Specialized.TryGetValue(type, out serializer);
             }
             return serializer;
         }
