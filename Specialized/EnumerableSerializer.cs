@@ -12,7 +12,7 @@ namespace Godot.Serialization.Specialized
     /// <summary>
     /// A (de)serializer for <see cref="IEnumerable{T}"/>.
     /// </summary>
-    public class EnumerableSerializer : Serializer
+    public class EnumerableSerializer : ISerializer
     {
         /// <summary>
         /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
@@ -21,7 +21,7 @@ namespace Godot.Serialization.Specialized
         /// <param name="enumerableType">The <see cref="Type"/> to serialize <paramref name="instance"/> as.</param>
         /// <returns>An <see cref="XmlNode"/> that represents <paramref name="instance"/> and the serializable data stored in it.</returns>
         /// <exception cref="SerializationException">Thrown if <paramref name="instance"/> could not be serialized due to unexpected errors or invalid input.</exception>
-        public override XmlNode Serialize(object instance, Type? enumerableType = null)
+        public XmlNode Serialize(object instance, Type? enumerableType = null)
         {
             enumerableType ??= instance.GetType();
             if (!enumerableType.IsExactlyGenericType(typeof(IEnumerable<>)))
@@ -36,10 +36,13 @@ namespace Godot.Serialization.Specialized
                 XmlDocument context = new();
                 XmlElement enumerableElement = context.CreateElement("Enumerable");
                 enumerableElement.SetAttribute("Type", enumerableType.FullName);
+
+                Serializer serializer = new();
+                
                 foreach (object item in (IEnumerable)instance)
                 {
                     XmlElement itemElement = context.CreateElement("item");
-                    base.Serialize(item, itemType).ChildNodes
+                    serializer.Serialize(item, itemType).ChildNodes
                         .Cast<XmlNode>()
                         .ForEach(node => itemElement.AppendChild(context.ImportNode(node, true)));
                     enumerableElement.AppendChild(itemElement);
@@ -59,9 +62,9 @@ namespace Godot.Serialization.Specialized
         /// <param name="enumerableType">The <see cref="Type"/> of <see cref="object"/> to deserialize the node as. It must be exactly <see cref="IEnumerable{T}"/>.</param>
         /// <returns>An <see cref="object"/> that represents the serialized data stored in <paramref name="node"/>.</returns>
         /// <exception cref="SerializationException">Thrown if <paramref name="node"/> could not be deserialized due to unexpected errors or invalid input.</exception>
-        public override object Deserialize(XmlNode node, Type? enumerableType = null)
+        public object Deserialize(XmlNode node, Type? enumerableType = null)
         {
-            enumerableType ??= EnumerableSerializer.GetTypeToDeserialize(node) ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
+            enumerableType ??= node.GetTypeToDeserialize() ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
             if (!enumerableType.IsExactlyGenericType(typeof(IEnumerable<>)))
             {
                 throw new SerializationException(node, $"\"{enumerableType.GetDisplayName()}\" cannot be (de)serialized by {typeof(EnumerableSerializer).GetDisplayName()}");
@@ -71,7 +74,7 @@ namespace Godot.Serialization.Specialized
             {
                 Type itemType = enumerableType.GenericTypeArguments[0];
                 Type listType = typeof(List<>).MakeGenericType(itemType);
-                object enumerable = new CollectionSerializer().Deserialize(node, listType); // Cannot use base.Deserialize() here as List<T> implements both ICollection<T> and IEnumerable<T>, and Serializer's dictionary is not sorted so IEnumerable<T> may be picked leading to infinite recursive calls
+                object enumerable = new CollectionSerializer().Deserialize(node, listType);
                 return typeof(IEnumerableExtensions).GetMethod("Copy")!.MakeGenericMethod(itemType).Invoke(null, new[] {enumerable,})!;
             }
             catch (Exception exception) when (exception is not SerializationException)

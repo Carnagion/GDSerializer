@@ -152,7 +152,7 @@ namespace Godot.Serialization
                 return null;
             }
             
-            type ??= Serializer.GetTypeToDeserialize(node) ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
+            type ??= node.GetTypeToDeserialize() ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
             
             // Use a more specialized deserializer if possible
             ISerializer? serializer = Serializer.GetSpecialSerializerForType(type);
@@ -230,22 +230,6 @@ namespace Godot.Serialization
         public T? Deserialize<T>(XmlNode node)
         {
             return (T?)this.Deserialize(node, typeof(T));
-        }
-        
-        /// <summary>
-        /// Tries to find a suitable <see cref="Type"/> to deserialize <paramref name="node"/> as.
-        /// </summary>
-        /// <param name="node">The <see cref="XmlNode"/> to deserialize.</param>
-        /// <returns>The <see cref="Type"/> of the serialized data in <paramref name="node"/>, or <see langword="null"/> if no suitable <see cref="Type"/> was found.</returns>
-        protected static Type? GetTypeToDeserialize(XmlNode node)
-        {
-            string name = (node.Attributes?["Type"]?.InnerText ?? node.Name)
-                .Replace("&lt;", "<")
-                .Replace("&gt;", ">");
-            return (from assembly in AppDomain.CurrentDomain.GetAssemblies().Distinct()
-                    select assembly.GetType(name))
-                .NotNull()
-                .FirstOrDefault();
         }
 
         private static ISerializer? GetSpecialSerializerForType(Type type)
