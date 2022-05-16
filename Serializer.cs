@@ -54,7 +54,7 @@ namespace Godot.Serialization
         /// <param name="type">The <see cref="Type"/> to serialize <paramref name="instance"/> as, in case it is different from <paramref name="instance"/>'s <see cref="Type"/>.</param>
         /// <returns>An <see cref="XmlNode"/> that represents <paramref name="instance"/> and the serializable data stored in it.</returns>
         /// <exception cref="SerializationException">Thrown if <paramref name="instance"/> could not be serialized due to unexpected errors or invalid input.</exception>
-        public virtual XmlNode Serialize(object instance, Type? type = null)
+        public XmlNode Serialize(object instance, Type? type = null)
         {
             type ??= instance.GetType();
             
@@ -145,7 +145,7 @@ namespace Godot.Serialization
         /// <param name="type">The <see cref="Type"/> of <see cref="object"/> to deserialize the node as, in case it is not apparent from <paramref name="node"/>'s attributes.</param>
         /// <returns>An <see cref="object"/> that represents the serialized data stored in <paramref name="node"/>.</returns>
         /// <exception cref="SerializationException">Thrown if a <see cref="Type"/> could not be inferred from <paramref name="node"/> or was invalid, an instance of the <see cref="Type"/> could not be created, <paramref name="node"/> contained invalid properties/fields, or <paramref name="node"/> could not be deserialized due to unexpected errors or invalid data.</exception>
-        public virtual object? Deserialize(XmlNode node, Type? type = null)
+        public object? Deserialize(XmlNode node, Type? type = null)
         {
             if (node.Attributes?["Null"]?.InnerText is "True")
             {
