@@ -86,7 +86,7 @@ namespace Godot.Serialization
                 }
 
                 // Recursively serialize properties
-                foreach (PropertyInfo property in from property in type.GetProperties(Serializer.instanceBindingFlags)
+                foreach (PropertyInfo property in from property in type.GetAllProperties(Serializer.instanceBindingFlags)
                                                   where property.IsSerializable()
                                                   select property)
                 {
@@ -103,7 +103,7 @@ namespace Godot.Serialization
                 }
                 
                 // Recursively serialize fields
-                foreach (FieldInfo field in from field in type.GetFields(Serializer.instanceBindingFlags)
+                foreach (FieldInfo field in from field in type.GetAllFields(Serializer.instanceBindingFlags)
                                             where field.IsSerializable()
                                             select field)
                 {
@@ -171,7 +171,7 @@ namespace Godot.Serialization
                                           select child)
                 {
                     // Recursively deserialize property
-                    PropertyInfo? property = type.GetProperty(child.Name, Serializer.instanceBindingFlags);
+                    PropertyInfo? property = type.FindProperty(child.Name, Serializer.instanceBindingFlags);
                     if (property is not null)
                     {
                         if (!property.CanWrite)
@@ -188,7 +188,7 @@ namespace Godot.Serialization
                     }
                 
                     // Recursively deserialize field
-                    FieldInfo? field = type.GetField(child.Name, Serializer.instanceBindingFlags);
+                    FieldInfo? field = type.FindField(child.Name, Serializer.instanceBindingFlags);
                     if (field is not null)
                     {
                         if (!field.GetCustomAttribute<SerializeAttribute>()?.Serializable ?? false)

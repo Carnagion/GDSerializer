@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 using Microsoft.CSharp;
 
@@ -56,6 +58,52 @@ namespace Godot.Serialization.Utility.Extensions
         {
             using CSharpCodeProvider provider = new();
             return provider.GetTypeOutput(new(type));
+        }
+
+        /// <summary>
+        /// Retrieves all fields defined in <paramref name="type"/> as well as its base <see cref="Type"/>s using <paramref name="flags"/>.
+        /// </summary>
+        /// <param name="type">The <see cref="Type"/> to search in.</param>
+        /// <param name="flags">The binding constraints.</param>
+        /// <returns>An <see cref="IEnumerable{T}"/> of fields defined in <paramref name="type"/> and its base <see cref="Type"/>s.</returns>
+        public static IEnumerable<FieldInfo> GetAllFields(this Type type, BindingFlags flags = BindingFlags.Default)
+        {
+            return type.BaseType is null ? type.GetFields(flags) : type.GetFields(flags).Concat(type.BaseType.GetAllFields(flags));
+        }
+
+        /// <summary>
+        /// Retrieves all properties defined in <paramref name="type"/> as well as its base <see cref="Type"/>s using <paramref name="flags"/>.
+        /// </summary>
+        /// <param name="type">The <see cref="Type"/> to search in.</param>
+        /// <param name="flags">The binding constraints.</param>
+        /// <returns>An <see cref="IEnumerable{T}"/> of properties defined in <paramref name="type"/> and its base <see cref="Type"/>s.</returns>
+        public static IEnumerable<PropertyInfo> GetAllProperties(this Type type, BindingFlags flags = BindingFlags.Default)
+        {
+            return type.BaseType is null ? type.GetProperties(flags) : type.GetProperties(flags).Concat(type.BaseType.GetAllProperties(flags));
+        }
+
+        /// <summary>
+        /// Searches for the specified field in <paramref name="type"/> and its base <see cref="Type"/>s.
+        /// </summary>
+        /// <param name="type">The <see cref="Type"/> to search in.</param>
+        /// <param name="name">The name of the field.</param>
+        /// <param name="flags">The binding constraints.</param>
+        /// <returns>A <see cref="FieldInfo"/> representing the field matching the specified name and constraints, or <see langword="null"/> if no match was found.</returns>
+        public static FieldInfo? FindField(this Type type, string name, BindingFlags flags = BindingFlags.Default)
+        {
+            return type.GetField(name, flags) ?? type.BaseType?.FindField(name, flags);
+        }
+
+        /// <summary>
+        /// Searches for the specified property in <paramref name="type"/> and its base <see cref="Type"/>s.
+        /// </summary>
+        /// <param name="type">The <see cref="Type"/> to search in.</param>
+        /// <param name="name">The name of the property.</param>
+        /// <param name="flags">The binding constraints.</param>
+        /// <returns>A <see cref="PropertyInfo"/> representing the property matching the specified name and constraints, or <see langword="null"/> if no match was found.</returns>
+        public static PropertyInfo? FindProperty(this Type type, string name, BindingFlags flags = BindingFlags.Default)
+        {
+            return type.GetProperty(name, flags) ?? type.BaseType?.FindProperty(name, flags);
         }
     }
 }
