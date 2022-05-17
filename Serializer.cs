@@ -234,22 +234,15 @@ namespace Godot.Serialization
 
         private static ISerializer? GetSpecialSerializerForType(Type type)
         {
-            ISerializer? serializer;
+            ISerializer? serializer = Serializer.Specialized.GetValueOrDefault(type);
+            if (serializer is not null)
+            {
+                return serializer;
+            }
             if (type.IsGenericType)
             {
-                serializer = Serializer.Specialized.GetValueOrDefault(type);
-                if (serializer is not null)
-                {
-                    return serializer;
-                }
-                Type? match = Serializer.Specialized.Keys
-                    .FirstOrDefault(type.IsExactlyGenericType);
-                if (match is not null)
-                {
-                    return Serializer.Specialized[match];
-                }
-                match = Serializer.Specialized.Keys
-                    .FirstOrDefault(type.DerivesFromGenericType);
+                Type? match = Serializer.Specialized.Keys.FirstOrDefault(type.IsExactlyGenericType);
+                match ??= Serializer.Specialized.Keys.FirstOrDefault(type.DerivesFromGenericType);
                 if (match is not null)
                 {
                     return Serializer.Specialized[match];
@@ -257,7 +250,11 @@ namespace Godot.Serialization
             }
             else
             {
-                Serializer.Specialized.TryGetValue(type, out serializer);
+                Type? match = Serializer.Specialized.Keys.FirstOrDefault(key => key.IsAssignableFrom(type));
+                if (match is not null)
+                {
+                    serializer = Serializer.Specialized[match];
+                }
             }
             return serializer;
         }
