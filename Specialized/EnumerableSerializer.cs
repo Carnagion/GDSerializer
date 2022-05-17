@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
@@ -36,17 +35,7 @@ namespace Godot.Serialization.Specialized
                 XmlDocument context = new();
                 XmlElement enumerableElement = context.CreateElement("Enumerable");
                 enumerableElement.SetAttribute("Type", enumerableType.FullName);
-
-                Serializer serializer = new();
-                
-                foreach (object item in (IEnumerable)instance)
-                {
-                    XmlElement itemElement = context.CreateElement("item");
-                    serializer.Serialize(item, itemType).ChildNodes
-                        .Cast<XmlNode>()
-                        .ForEach(node => itemElement.AppendChild(context.ImportNode(node, true)));
-                    enumerableElement.AppendChild(itemElement);
-                }
+                EnumerableSerializer.SerializeItems(instance, itemType).ForEach(node => enumerableElement.AppendChild(context.ImportNode(node, true)));
                 return enumerableElement;
             }
             catch (Exception exception) when (exception is not SerializationException)
