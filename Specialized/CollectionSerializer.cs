@@ -43,7 +43,11 @@ namespace Godot.Serialization.Specialized
                 foreach (object item in (IEnumerable)instance)
                 {
                     XmlElement itemElement = context.CreateElement("item");
-                    serializer.Serialize(item, itemType).ChildNodes
+                    if (item.GetType() != itemType)
+                    {
+                        itemElement.SetAttribute("Type", item.GetType().FullName);
+                    }
+                    serializer.Serialize(item, item.GetType()).ChildNodes
                         .Cast<XmlNode>()
                         .ForEach(node => itemElement.AppendChild(node));
                     collectionElement.AppendChild(context.ImportNode(itemElement, true));
@@ -92,7 +96,7 @@ namespace Godot.Serialization.Specialized
                     {
                         throw new SerializationException(child, "Invalid XML node (all nodes in a collection must be named \"item\")");
                     }
-                    add.Invoke(collection, new[] {serializer.Deserialize(child, itemType),});
+                    add.Invoke(collection, new[] {serializer.Deserialize(child, child.GetTypeToDeserialize() ?? itemType),});
                 }
                 return collection;
             }
