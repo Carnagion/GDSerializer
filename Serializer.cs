@@ -40,6 +40,7 @@ namespace Godot.Serialization
             {typeof(float), new SimpleSerializer()},
             {typeof(double), new SimpleSerializer()},
             {typeof(decimal), new SimpleSerializer()},
+            {typeof(Array), new ArraySerializer()},
             {typeof(IDictionary<,>), new DictionarySerializer()},
             {typeof(ICollection<>), new CollectionSerializer()},
             {typeof(IEnumerable<>), new EnumerableSerializer()},
