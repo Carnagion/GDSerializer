@@ -8,8 +8,18 @@ using Godot.Serialization.Utility.Extensions;
 
 namespace Godot.Serialization.Specialized
 {
+    /// <summary>
+    /// A (de)serializer for arrays.
+    /// </summary>
     public class ArraySerializer : CollectionSerializer
     {
+        /// <summary>
+        /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
+        /// </summary>
+        /// <param name="instance">The <see cref="object"/> to serialize. It must be an array.</param>
+        /// <param name="arrayType">The <see cref="Type"/> to serialize <paramref name="instance"/> as. It must be an array type.</param>
+        /// <returns>An <see cref="XmlNode"/> that represents <paramref name="instance"/> and the serializable data stored in it.</returns>
+        /// <exception cref="SerializationException">Thrown if <paramref name="instance"/> could not be serialized due to unexpected errors or invalid input.</exception>
         public override XmlNode Serialize(object instance, Type? arrayType = null)
         {
             arrayType ??= instance.GetType();
@@ -33,7 +43,14 @@ namespace Godot.Serialization.Specialized
                 throw new SerializationException(instance, exception);
             }
         }
-
+        
+        /// <summary>
+        /// Deserializes <paramref name="node"/> into an <see cref="object"/>.
+        /// </summary>
+        /// <param name="node">The <see cref="XmlNode"/> to deserialize.</param>
+        /// <param name="arrayType">The <see cref="Type"/> of <see cref="object"/> to deserialize the node as. It must be an array type</param>
+        /// <returns>An <see cref="object"/> that represents the serialized data stored in <paramref name="node"/>.</returns>
+        /// <exception cref="SerializationException">Thrown if a <see cref="Type"/> could not be inferred from <paramref name="node"/> or was invalid, an instance of the <see cref="Type"/> could not be created, <paramref name="node"/> contained invalid properties/fields, or <paramref name="node"/> could not be deserialized due to unexpected errors or invalid data.</exception>
         public override object Deserialize(XmlNode node, Type? arrayType = null)
         {
             arrayType ??= node.GetTypeToDeserialize() ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
