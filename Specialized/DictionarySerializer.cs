@@ -48,23 +48,31 @@ namespace Godot.Serialization.Specialized
 
                 foreach (object item in (IEnumerable)instance)
                 {
-                    XmlElement itemElement = context.CreateElement("item");
-                    XmlElement keyElement = context.CreateElement("key");
-                    XmlElement valueElement = context.CreateElement("value");
-                    
                     object key = keyProperty.GetValue(item)!;
                     object value = valueProperty.GetValue(item)!;
                     
-                    serializer.Serialize(key, keyType).ChildNodes
+                    XmlElement keyElement = context.CreateElement("key");
+                    if (key.GetType() != keyType)
+                    {
+                        keyElement.SetAttribute("Type", key.GetType().FullName);
+                    }
+                    serializer.Serialize(key, key.GetType()).ChildNodes
                         .Cast<XmlNode>()
                         .ForEach(node => keyElement.AppendChild(context.ImportNode(node, true)));
                     
-                    serializer.Serialize(value, valueType).ChildNodes
+                    XmlElement valueElement = context.CreateElement("value");
+                    if (value.GetType() != valueType)
+                    {
+                        valueElement.SetAttribute("Type", value.GetType().FullName);
+                    }
+                    serializer.Serialize(value, value.GetType()).ChildNodes
                         .Cast<XmlNode>()
                         .ForEach(node => valueElement.AppendChild(context.ImportNode(node, true)));
                     
+                    XmlElement itemElement = context.CreateElement("item");
                     itemElement.AppendChild(keyElement);
                     itemElement.AppendChild(valueElement);
+                    
                     dictionaryElement.AppendChild(itemElement);
                 }
 
@@ -122,7 +130,7 @@ namespace Godot.Serialization.Specialized
                         .Cast<XmlNode>()
                         .SingleOrDefault(grandchild => grandchild.Name == "value") ?? throw new SerializationException(child, "No value node present");
 
-                    add.Invoke(dictionary, new[] {serializer.Deserialize(key, keyType), serializer.Deserialize(value, valueType),});
+                    add.Invoke(dictionary, new[] {serializer.Deserialize(key, key.GetTypeToDeserialize() ?? keyType), serializer.Deserialize(value, value.GetTypeToDeserialize() ?? valueType),});
                 }
                 return dictionary;
             }
