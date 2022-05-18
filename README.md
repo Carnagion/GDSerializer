@@ -10,7 +10,7 @@ GDSerializer is available as a [NuGet package](https://www.nuget.org/packages/GD
 Simply include the following lines in a Godot project's `.csproj` file (either by editing the file manually or letting an IDE install the package):  
 ```xml
 <ItemGroup>
-    <PackageReference Include="GDSerializer" Version="0.1.3" />
+    <PackageReference Include="GDSerializer" Version="0.2.0" />
 </ItemGroup>
 ```
 
