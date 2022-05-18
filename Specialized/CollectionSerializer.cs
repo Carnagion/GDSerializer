@@ -100,7 +100,7 @@ namespace Godot.Serialization.Specialized
                 }
                 serializer.Serialize(item, item.GetType()).ChildNodes
                     .Cast<XmlNode>()
-                    .ForEach(node => itemElement.AppendChild(node));
+                    .ForEach(node => itemElement.AppendChild(context.ImportNode(node, true)));
                 yield return itemElement;
             }
         }
@@ -115,12 +115,9 @@ namespace Godot.Serialization.Specialized
         protected static IEnumerable<object?> DeserializeItems(XmlNode node, Type itemType)
         {
             Serializer serializer = new();
-            foreach (XmlNode child in from XmlNode child in node.ChildNodes
-                                      where child.NodeType is XmlNodeType.Element
-                                      select child)
-            {
-                yield return child.Name is "item" ? serializer.Deserialize(child, child.GetTypeToDeserialize() ?? itemType) : throw new SerializationException(child, "Invalid XML node (all nodes in a collection must be named \"item\")");
-            }
+            return from child in node.ChildNodes.Cast<XmlNode>()
+                   where child.NodeType is XmlNodeType.Element
+                   select child.Name is "item" ? serializer.Deserialize(child, child.GetTypeToDeserialize() ?? itemType) : throw new SerializationException(child, "Invalid XML node (all nodes in a collection must be named \"item\")");
         }
     }
 }
