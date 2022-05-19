@@ -34,7 +34,7 @@ namespace Godot.Serialization.Specialized
 
                 XmlDocument context = new();
                 XmlElement arrayElement = context.CreateElement("Array");
-                arrayElement.SetAttribute("Type", arrayType.FullName);
+                arrayElement.SetAttribute("Type", $"{itemType.FullName}[]");
                 ArraySerializer.SerializeItems(instance, itemType).ForEach(node => arrayElement.AppendChild(context.ImportNode(node, true)));
                 return arrayElement;
             }
