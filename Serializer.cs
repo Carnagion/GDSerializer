@@ -120,6 +120,11 @@ namespace Godot.Serialization
                     element.AppendChild(node);
                 }
 
+                // Invoke all [AfterSerialization] methods
+                (from method in type.GetAllMembers<MethodInfo>()
+                 where method.GetCustomAttribute<AfterSerializationAttribute>() is not null
+                 select method).ForEach(method => method.Invoke(method.IsStatic ? null : instance, null));
+
                 return element;
             }
             catch (Exception exception) when (exception is not SerializationException)
@@ -214,6 +219,11 @@ namespace Godot.Serialization
                     throw new SerializationException(node, $"One or more mandatory properties or fields of {type.GetDisplayName()} were not deserialized");
                 }
 
+                // Invoke all [AfterDeserialization] methods
+                (from method in type.GetAllMembers<MethodInfo>()
+                 where method.GetCustomAttribute<AfterDeserializationAttribute>() is not null
+                 select method).ForEach(method => method.Invoke(method.IsStatic ? null : instance, null));
+                
                 return instance;
             }
             catch (Exception exception) when (exception is not SerializationException)
