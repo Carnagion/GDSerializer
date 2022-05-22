@@ -87,7 +87,7 @@ namespace Godot.Serialization
                 }
 
                 // Recursively serialize properties
-                foreach (PropertyInfo property in from property in type.GetAllProperties(Serializer.instanceBindingFlags)
+                foreach (PropertyInfo property in from property in type.GetAllMembers<PropertyInfo>(Serializer.instanceBindingFlags)
                                                   where property.IsSerializable()
                                                   select property)
                 {
@@ -104,7 +104,7 @@ namespace Godot.Serialization
                 }
                 
                 // Recursively serialize fields
-                foreach (FieldInfo field in from field in type.GetAllFields(Serializer.instanceBindingFlags)
+                foreach (FieldInfo field in from field in type.GetAllMembers<FieldInfo>(Serializer.instanceBindingFlags)
                                             where field.IsSerializable()
                                             select field)
                 {
