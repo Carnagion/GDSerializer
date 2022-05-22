@@ -19,15 +19,10 @@ namespace Godot.Serialization.Utility.Extensions
         /// <returns><see langword="true"/> if <paramref name="field"/> can be (de)serialized by an <see cref="ISerializer"/>.</returns>
         public static bool IsSerializable(this FieldInfo field)
         {
-            if (field.GetCustomAttribute<CompilerGeneratedAttribute>() is not null)
-            {
-                return false;
-            }
-            if (field.FieldType.IsPointer || FieldInfoExtensions.forbiddenTypes.Contains(field.FieldType))
-            {
-                return false;
-            }
-            return field.GetCustomAttribute<SerializeAttribute>()?.Serializable ?? true;
+            return field.GetCustomAttribute<CompilerGeneratedAttribute>() is null
+                   && !field.FieldType.IsPointer
+                   && !FieldInfoExtensions.forbiddenTypes.Contains(field.FieldType)
+                   && (field.GetCustomAttribute<SerializeAttribute>()?.Serializable ?? true);
         }
     }
 }

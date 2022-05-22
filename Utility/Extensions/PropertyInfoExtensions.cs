@@ -19,23 +19,13 @@ namespace Godot.Serialization.Utility.Extensions
         /// <returns><see langword="true"/> if <paramref name="property"/> can be (de)serialized by an <see cref="ISerializer"/>.</returns>
         public static bool IsSerializable(this PropertyInfo property)
         {
-            if (!property.CanRead || !property.CanWrite)
-            {
-                return false;
-            }
-            if (property.GetIndexParameters().Any())
-            {
-                return false;
-            }
-            if (property.GetCustomAttribute<CompilerGeneratedAttribute>() is not null || property.GetMethod.GetCustomAttribute<CompilerGeneratedAttribute>() is not null)
-            {
-                return false;
-            }
-            if (PropertyInfoExtensions.forbiddenTypes.Contains(property.PropertyType))
-            {
-                return false;
-            }
-            return property.GetCustomAttribute<SerializeAttribute>()?.Serializable ?? true;
+            return property.CanRead
+                   && property.CanWrite
+                   && !property.GetIndexParameters().Any()
+                   && property.GetCustomAttribute<CompilerGeneratedAttribute>() is null
+                   && property.GetMethod.GetCustomAttribute<CompilerGeneratedAttribute>() is null
+                   && !PropertyInfoExtensions.forbiddenTypes.Contains(property.PropertyType)
+                   && (property.GetCustomAttribute<SerializeAttribute>()?.Serializable ?? true);
         }
     }
 }
