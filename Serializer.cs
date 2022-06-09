@@ -20,26 +20,26 @@ namespace Godot.Serialization
         {
             this.Specialized = new(19)
             {
-                {typeof(string), new SimpleSerializer()},
-                {typeof(char), new SimpleSerializer()},
-                {typeof(bool), new SimpleSerializer()},
-                {typeof(sbyte), new SimpleSerializer()},
-                {typeof(byte), new SimpleSerializer()},
-                {typeof(short), new SimpleSerializer()},
-                {typeof(ushort), new SimpleSerializer()},
-                {typeof(int), new SimpleSerializer()},
-                {typeof(uint), new SimpleSerializer()},
-                {typeof(long), new SimpleSerializer()},
-                {typeof(ulong), new SimpleSerializer()},
-                {typeof(float), new SimpleSerializer()},
-                {typeof(double), new SimpleSerializer()},
-                {typeof(decimal), new SimpleSerializer()},
+                {typeof(string), Serializer.simple},
+                {typeof(char), Serializer.simple},
+                {typeof(bool), Serializer.simple},
+                {typeof(sbyte), Serializer.simple},
+                {typeof(byte), Serializer.simple},
+                {typeof(short), Serializer.simple},
+                {typeof(ushort), Serializer.simple},
+                {typeof(int), Serializer.simple},
+                {typeof(uint), Serializer.simple},
+                {typeof(long), Serializer.simple},
+                {typeof(ulong), Serializer.simple},
+                {typeof(float), Serializer.simple},
+                {typeof(double), Serializer.simple},
+                {typeof(decimal), Serializer.simple},
                 {typeof(Array), new ArraySerializer(this)},
                 {typeof(IDictionary<,>), new DictionarySerializer(this)},
                 {typeof(ICollection<>), new CollectionSerializer(this)},
                 {typeof(IEnumerable<>), new EnumerableSerializer(this)},
-                {typeof(Vector2), new VectorSerializer()},
-                {typeof(Vector3), new VectorSerializer()},
+                {typeof(Vector2), Serializer.vector},
+                {typeof(Vector3), Serializer.vector},
             };
         }
 
@@ -49,6 +49,10 @@ namespace Godot.Serialization
         }
         
         private const BindingFlags instanceBindingFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
+
+        private static readonly SimpleSerializer simple = new();
+
+        private static readonly VectorSerializer vector = new();
 
         /// <summary>
         /// An <see cref="OrderedDictionary{TKey,TValue}"/> of specialized <see cref="ISerializer"/>s for specific <see cref="Type"/>s. These serializers will be used by the <see cref="Serializer"/> when possible.
