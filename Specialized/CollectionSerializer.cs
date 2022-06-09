@@ -15,6 +15,10 @@ namespace Godot.Serialization.Specialized
     /// </summary>
     public class CollectionSerializer : ISerializer
     {
+        /// <summary>
+        /// Initialises a new <see cref="CollectionSerializer"/> with the specified parameters.
+        /// </summary>
+        /// <param name="itemSerializer">The serializer to use when (de)serializing the <see cref="ICollection{T}"/>'s items.</param>
         public CollectionSerializer(ISerializer itemSerializer)
         {
             this.itemSerializer = itemSerializer;

@@ -16,6 +16,9 @@ namespace Godot.Serialization
     /// </summary>
     public class Serializer : ISerializer
     {
+        /// <summary>
+        /// Initialises a new <see cref="Serializer"/> with the default specialized serializers.
+        /// </summary>
         public Serializer()
         {
             this.Specialized = new(19)
@@ -43,6 +46,10 @@ namespace Godot.Serialization
             };
         }
 
+        /// <summary>
+        /// Initialises a new <see cref="Serializer"/> with the specified parameters.
+        /// </summary>
+        /// <param name="specializedSerializers">The specialized serializers to use when (de)serializing specific <see cref="Type"/>s.</param>
         public Serializer(OrderedDictionary<Type, ISerializer> specializedSerializers)
         {
             this.Specialized = specializedSerializers;

@@ -13,6 +13,10 @@ namespace Godot.Serialization.Specialized
     /// </summary>
     public class EnumerableSerializer : CollectionSerializer
     {
+        /// <summary>
+        /// Initialises a new <see cref="EnumerableSerializer"/> with the specified parameters.
+        /// </summary>
+        /// <param name="itemSerializer">The serializer to use when (de)serializing the <see cref="IEnumerable{T}"/>'s items.</param>
         public EnumerableSerializer(ISerializer itemSerializer) : base(itemSerializer)
         {
         }

@@ -13,6 +13,10 @@ namespace Godot.Serialization.Specialized
     /// </summary>
     public class ArraySerializer : CollectionSerializer
     {
+        /// <summary>
+        /// Initialises a new <see cref="ArraySerializer"/> with the specified parameters.
+        /// </summary>
+        /// <param name="itemSerializer">The serializer to use when (de)serializing the array's items.</param>
         public ArraySerializer(ISerializer itemSerializer) : base(itemSerializer)
         {
         }

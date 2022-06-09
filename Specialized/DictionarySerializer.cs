@@ -15,6 +15,10 @@ namespace Godot.Serialization.Specialized
     /// </summary>
     public class DictionarySerializer : ISerializer
     {
+        /// <summary>
+        /// Initialises a new <see cref="DictionarySerializer"/> with the specified parameters.
+        /// </summary>
+        /// <param name="itemSerializer">The serializer to use when (de)serializing the <see cref="IDictionary{TKey,TValue}"/>'s items.</param>
         public DictionarySerializer(ISerializer itemSerializer)
         {
             this.itemSerializer = itemSerializer;
