@@ -15,6 +15,13 @@ namespace Godot.Serialization.Specialized
     /// </summary>
     public class DictionarySerializer : ISerializer
     {
+        public DictionarySerializer(ISerializer itemSerializer)
+        {
+            this.itemSerializer = itemSerializer;
+        }
+
+        private readonly ISerializer itemSerializer;
+        
         /// <summary>
         /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
         /// </summary>
@@ -43,8 +50,6 @@ namespace Godot.Serialization.Specialized
                 XmlDocument context = new();
                 XmlElement dictionaryElement = context.CreateElement("Dictionary");
                 dictionaryElement.SetAttribute("Type", dictionaryType.FullName);
-                
-                Serializer serializer = new();
 
                 foreach (object item in (IEnumerable)instance)
                 {
@@ -56,7 +61,7 @@ namespace Godot.Serialization.Specialized
                     {
                         keyElement.SetAttribute("Type", key.GetType().FullName);
                     }
-                    serializer.Serialize(key, key.GetType()).ChildNodes
+                    this.itemSerializer.Serialize(key, key.GetType()).ChildNodes
                         .Cast<XmlNode>()
                         .ForEach(node => keyElement.AppendChild(context.ImportNode(node, true)));
                     
@@ -65,7 +70,7 @@ namespace Godot.Serialization.Specialized
                     {
                         valueElement.SetAttribute("Type", value.GetType().FullName);
                     }
-                    serializer.Serialize(value, value.GetType()).ChildNodes
+                    this.itemSerializer.Serialize(value, value.GetType()).ChildNodes
                         .Cast<XmlNode>()
                         .ForEach(node => valueElement.AppendChild(context.ImportNode(node, true)));
                     

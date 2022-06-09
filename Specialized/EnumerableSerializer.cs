@@ -13,6 +13,10 @@ namespace Godot.Serialization.Specialized
     /// </summary>
     public class EnumerableSerializer : CollectionSerializer
     {
+        public EnumerableSerializer(ISerializer itemSerializer) : base(itemSerializer)
+        {
+        }
+        
         /// <summary>
         /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
         /// </summary>
@@ -35,7 +39,7 @@ namespace Godot.Serialization.Specialized
                 XmlDocument context = new();
                 XmlElement enumerableElement = context.CreateElement("Enumerable");
                 enumerableElement.SetAttribute("Type", enumerableType.FullName);
-                EnumerableSerializer.SerializeItems(instance, itemType).ForEach(node => enumerableElement.AppendChild(context.ImportNode(node, true)));
+                this.SerializeItems(instance, itemType).ForEach(node => enumerableElement.AppendChild(context.ImportNode(node, true)));
                 return enumerableElement;
             }
             catch (Exception exception) when (exception is not SerializationException)

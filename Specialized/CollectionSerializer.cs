@@ -15,6 +15,13 @@ namespace Godot.Serialization.Specialized
     /// </summary>
     public class CollectionSerializer : ISerializer
     {
+        public CollectionSerializer(ISerializer itemSerializer)
+        {
+            this.itemSerializer = itemSerializer;
+        }
+
+        private readonly ISerializer itemSerializer;
+        
         /// <summary>
         /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
         /// </summary>
@@ -37,7 +44,7 @@ namespace Godot.Serialization.Specialized
                 XmlDocument context = new();
                 XmlElement collectionElement = context.CreateElement("Collection");
                 collectionElement.SetAttribute("Type", collectionType.FullName);
-                CollectionSerializer.SerializeItems(instance, itemType).ForEach(node => collectionElement.AppendChild(context.ImportNode(node, true)));
+                this.SerializeItems(instance, itemType).ForEach(node => collectionElement.AppendChild(context.ImportNode(node, true)));
                 return collectionElement;
             }
             catch (Exception exception) when (exception is not SerializationException)
@@ -72,7 +79,7 @@ namespace Godot.Serialization.Specialized
                 }
             
                 object collection = Activator.CreateInstance(collectionType, true) ?? throw new SerializationException(node, $"Unable to instantiate {collectionType.GetDisplayName()}");
-                CollectionSerializer.DeserializeItems(node, itemType).ForEach(item => add.Invoke(collection, new[] {item,}));
+                this.DeserializeItems(node, itemType).ForEach(item => add.Invoke(collection, new[] {item,}));
                 return collection;
             }
             catch (Exception exception) when (exception is not SerializationException)
@@ -87,10 +94,9 @@ namespace Godot.Serialization.Specialized
         /// <param name="instance">The collection to serialize.</param>
         /// <param name="itemType">The <see cref="Type"/> of items in <paramref name="instance"/>.</param>
         /// <returns>An <see cref="IEnumerable{T}"/> of the serialized versions of the items in <paramref name="instance"/>.</returns>
-        protected static IEnumerable<XmlNode> SerializeItems(object instance, Type itemType)
+        protected IEnumerable<XmlNode> SerializeItems(object instance, Type itemType)
         {
             XmlDocument context = new();
-            Serializer serializer = new();
             foreach (object item in (IEnumerable)instance)
             {
                 XmlElement itemElement = context.CreateElement("item");
@@ -98,7 +104,7 @@ namespace Godot.Serialization.Specialized
                 {
                     itemElement.SetAttribute("Type", item.GetType().FullName);
                 }
-                serializer.Serialize(item, item.GetType()).ChildNodes
+                this.itemSerializer.Serialize(item, item.GetType()).ChildNodes
                     .Cast<XmlNode>()
                     .ForEach(node => itemElement.AppendChild(context.ImportNode(node, true)));
                 yield return itemElement;
@@ -112,12 +118,11 @@ namespace Godot.Serialization.Specialized
         /// <param name="itemType">The <see cref="Type"/> of items in the collection.</param>
         /// <returns>An <see cref="IEnumerable{T}"/> of the deserialized children nodes of <paramref name="node"/>.</returns>
         /// <exception cref="SerializationException">Thrown if one of the child nodes in <paramref name="node"/> is not named "item".</exception>
-        protected static IEnumerable<object?> DeserializeItems(XmlNode node, Type itemType)
+        protected IEnumerable<object?> DeserializeItems(XmlNode node, Type itemType)
         {
-            Serializer serializer = new();
             return from child in node.ChildNodes.Cast<XmlNode>()
                    where child.NodeType is XmlNodeType.Element
-                   select child.Name is "item" ? serializer.Deserialize(child, child.GetTypeToDeserialize() ?? itemType) : throw new SerializationException(child, "Invalid XML node (all nodes in a collection must be named \"item\")");
+                   select child.Name is "item" ? this.itemSerializer.Deserialize(child, child.GetTypeToDeserialize() ?? itemType) : throw new SerializationException(child, "Invalid XML node (all nodes in a collection must be named \"item\")");
         }
     }
 }
