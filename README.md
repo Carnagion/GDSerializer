@@ -32,3 +32,25 @@ It is also recommended to enable nullability warnings in the project; however, t
     <Nullable>enable</Nullable>
 </PropertyGroup>
 ```
+
+# Usage
+
+Creating a new serializer instance:
+```csharp
+Serializer serializer = new(); // or new Serializer() for older language versions that do not recognise target-typed new()
+```
+
+Serializing an object as an XML node:
+```csharp
+XmlNode xml = serializer.Serialize(obj);
+```
+
+Deserializing an XML node as an object:
+```csharp
+object? obj = serializer.Deserialize(xml);
+```
+
+An optional type argument can be provided for both serialization and deserialization, in order to assist the serializer with figuring out the object's `Type`.  
+Generic versions of the methods can also be used.
+
+More detailed instructions on using the `Serializer` class can be found on the [GDSerializer wiki](https://github.com/Carnagion/GDSerializer/wiki).
