@@ -16,37 +16,59 @@ namespace Godot.Serialization
     /// </summary>
     public class Serializer : ISerializer
     {
+        /// <summary>
+        /// Initialises a new <see cref="Serializer"/> with the default specialized serializers.
+        /// </summary>
+        public Serializer()
+        {
+            this.Specialized = new(19)
+            {
+                {typeof(string), Serializer.simple},
+                {typeof(char), Serializer.simple},
+                {typeof(bool), Serializer.simple},
+                {typeof(sbyte), Serializer.simple},
+                {typeof(byte), Serializer.simple},
+                {typeof(short), Serializer.simple},
+                {typeof(ushort), Serializer.simple},
+                {typeof(int), Serializer.simple},
+                {typeof(uint), Serializer.simple},
+                {typeof(long), Serializer.simple},
+                {typeof(ulong), Serializer.simple},
+                {typeof(float), Serializer.simple},
+                {typeof(double), Serializer.simple},
+                {typeof(decimal), Serializer.simple},
+                {typeof(Array), new ArraySerializer(this)},
+                {typeof(IDictionary<,>), new DictionarySerializer(this)},
+                {typeof(ICollection<>), new CollectionSerializer(this)},
+                {typeof(IEnumerable<>), new EnumerableSerializer(this)},
+                {typeof(Vector2), Serializer.vector},
+                {typeof(Vector3), Serializer.vector},
+                {typeof(Enum), new EnumSerializer()},
+            };
+        }
+
+        /// <summary>
+        /// Initialises a new <see cref="Serializer"/> with the specified parameters.
+        /// </summary>
+        /// <param name="specializedSerializers">The specialized serializers to use when (de)serializing specific <see cref="Type"/>s.</param>
+        public Serializer(OrderedDictionary<Type, ISerializer> specializedSerializers)
+        {
+            this.Specialized = specializedSerializers;
+        }
+        
         private const BindingFlags instanceBindingFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
+
+        private static readonly SimpleSerializer simple = new();
+
+        private static readonly VectorSerializer vector = new();
 
         /// <summary>
         /// An <see cref="OrderedDictionary{TKey,TValue}"/> of specialized <see cref="ISerializer"/>s for specific <see cref="Type"/>s. These serializers will be used by the <see cref="Serializer"/> when possible.
         /// </summary>
-        public static OrderedDictionary<Type, ISerializer> Specialized // Must be static since other serializers create new Serializer instances, and they all need access to the same dictionary
+        public OrderedDictionary<Type, ISerializer> Specialized
         {
             get;
-        } = new(19)
-        {
-            {typeof(string), new SimpleSerializer()},
-            {typeof(char), new SimpleSerializer()},
-            {typeof(bool), new SimpleSerializer()},
-            {typeof(sbyte), new SimpleSerializer()},
-            {typeof(byte), new SimpleSerializer()},
-            {typeof(short), new SimpleSerializer()},
-            {typeof(ushort), new SimpleSerializer()},
-            {typeof(int), new SimpleSerializer()},
-            {typeof(uint), new SimpleSerializer()},
-            {typeof(long), new SimpleSerializer()},
-            {typeof(ulong), new SimpleSerializer()},
-            {typeof(float), new SimpleSerializer()},
-            {typeof(double), new SimpleSerializer()},
-            {typeof(decimal), new SimpleSerializer()},
-            {typeof(Array), new ArraySerializer()},
-            {typeof(IDictionary<,>), new DictionarySerializer()},
-            {typeof(ICollection<>), new CollectionSerializer()},
-            {typeof(IEnumerable<>), new EnumerableSerializer()},
-            {typeof(Vector2), new VectorSerializer()},
-            {typeof(Vector3), new VectorSerializer()},
-        };
+        }
 
         /// <summary>
         /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
@@ -60,7 +82,7 @@ namespace Godot.Serialization
             type ??= instance.GetType();
             
             // Use a more specialized serializer if possible
-            ISerializer? serializer = Serializer.GetSpecialSerializerForType(type);
+            ISerializer? serializer = this.GetSpecialSerializerForType(type);
             if (serializer is not null)
             {
                 return serializer.Serialize(instance, type);
@@ -87,7 +109,7 @@ namespace Godot.Serialization
                 }
 
                 // Recursively serialize properties
-                foreach (PropertyInfo property in from property in type.GetAllProperties(Serializer.instanceBindingFlags)
+                foreach (PropertyInfo property in from property in type.GetAllMembers<PropertyInfo>(Serializer.instanceBindingFlags)
                                                   where property.IsSerializable()
                                                   select property)
                 {
@@ -104,7 +126,7 @@ namespace Godot.Serialization
                 }
                 
                 // Recursively serialize fields
-                foreach (FieldInfo field in from field in type.GetAllFields(Serializer.instanceBindingFlags)
+                foreach (FieldInfo field in from field in type.GetAllMembers<FieldInfo>(Serializer.instanceBindingFlags)
                                             where field.IsSerializable()
                                             select field)
                 {
@@ -120,23 +142,17 @@ namespace Godot.Serialization
                     element.AppendChild(node);
                 }
 
+                // Invoke all [AfterSerialization] methods
+                (from method in type.GetAllMembers<MethodInfo>()
+                 where method.GetCustomAttribute<AfterSerializationAttribute>() is not null
+                 select method).ForEach(method => method.Invoke(method.IsStatic ? null : instance, null));
+
                 return element;
             }
             catch (Exception exception) when (exception is not SerializationException)
             {
                 throw new SerializationException(instance, exception);
             }
-        }
-
-        /// <summary>
-        /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
-        /// </summary>
-        /// <param name="instance">The <see cref="object"/> to serialize.</param>
-        /// <typeparam name="T">The <see cref="Type"/> to serialize <paramref name="instance"/> as.</typeparam>
-        /// <returns>An <see cref="XmlNode"/> that represents <paramref name="instance"/> and the serializable data stored in it.</returns>
-        public XmlNode Serialize<T>(T instance) where T : notnull
-        {
-            return this.Serialize(instance, typeof(T));
         }
 
         /// <summary>
@@ -156,7 +172,7 @@ namespace Godot.Serialization
             type ??= node.GetTypeToDeserialize() ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
             
             // Use a more specialized deserializer if possible
-            ISerializer? serializer = Serializer.GetSpecialSerializerForType(type);
+            ISerializer? serializer = this.GetSpecialSerializerForType(type);
             if (serializer is not null)
             {
                 return serializer.Deserialize(node, type);
@@ -214,12 +230,28 @@ namespace Godot.Serialization
                     throw new SerializationException(node, $"One or more mandatory properties or fields of {type.GetDisplayName()} were not deserialized");
                 }
 
+                // Invoke all [AfterDeserialization] methods
+                (from method in type.GetAllMembers<MethodInfo>()
+                 where method.GetCustomAttribute<AfterDeserializationAttribute>() is not null
+                 select method).ForEach(method => method.Invoke(method.IsStatic ? null : instance, null));
+                
                 return instance;
             }
             catch (Exception exception) when (exception is not SerializationException)
             {
                 throw new SerializationException(node, exception);
             }
+        }
+
+        /// <summary>
+        /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
+        /// </summary>
+        /// <param name="instance">The <see cref="object"/> to serialize.</param>
+        /// <typeparam name="T">The <see cref="Type"/> to serialize <paramref name="instance"/> as.</typeparam>
+        /// <returns>An <see cref="XmlNode"/> that represents <paramref name="instance"/> and the serializable data stored in it.</returns>
+        public XmlNode Serialize<T>(T instance) where T : notnull
+        {
+            return this.Serialize(instance, typeof(T));
         }
 
         /// <summary>
@@ -233,28 +265,28 @@ namespace Godot.Serialization
             return (T?)this.Deserialize(node, typeof(T));
         }
 
-        private static ISerializer? GetSpecialSerializerForType(Type type)
+        private ISerializer? GetSpecialSerializerForType(Type type)
         {
-            ISerializer? serializer = Serializer.Specialized.GetValueOrDefault(type);
+            ISerializer? serializer = this.Specialized.GetValueOrDefault(type);
             if (serializer is not null)
             {
                 return serializer;
             }
             if (type.IsGenericType)
             {
-                Type? match = Serializer.Specialized.Keys.FirstOrDefault(type.IsExactlyGenericType);
-                match ??= Serializer.Specialized.Keys.FirstOrDefault(type.DerivesFromGenericType);
+                Type? match = this.Specialized.Keys.FirstOrDefault(type.IsExactlyGenericType);
+                match ??= this.Specialized.Keys.FirstOrDefault(type.DerivesFromGenericType);
                 if (match is not null)
                 {
-                    return Serializer.Specialized[match];
+                    return this.Specialized[match];
                 }
             }
             else
             {
-                Type? match = Serializer.Specialized.Keys.FirstOrDefault(key => key.IsAssignableFrom(type));
+                Type? match = this.Specialized.Keys.FirstOrDefault(key => key.IsAssignableFrom(type));
                 if (match is not null)
                 {
-                    serializer = Serializer.Specialized[match];
+                    serializer = this.Specialized[match];
                 }
             }
             return serializer;

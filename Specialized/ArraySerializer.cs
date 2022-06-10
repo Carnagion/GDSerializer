@@ -14,6 +14,14 @@ namespace Godot.Serialization.Specialized
     public class ArraySerializer : CollectionSerializer
     {
         /// <summary>
+        /// Initialises a new <see cref="ArraySerializer"/> with the specified parameters.
+        /// </summary>
+        /// <param name="itemSerializer">The serializer to use when (de)serializing the array's items.</param>
+        public ArraySerializer(ISerializer itemSerializer) : base(itemSerializer)
+        {
+        }
+        
+        /// <summary>
         /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
         /// </summary>
         /// <param name="instance">The <see cref="object"/> to serialize. It must be an array.</param>
@@ -34,8 +42,8 @@ namespace Godot.Serialization.Specialized
 
                 XmlDocument context = new();
                 XmlElement arrayElement = context.CreateElement("Array");
-                arrayElement.SetAttribute("Type", arrayType.FullName);
-                ArraySerializer.SerializeItems(instance, itemType).ForEach(node => arrayElement.AppendChild(context.ImportNode(node, true)));
+                arrayElement.SetAttribute("Type", $"{itemType.FullName}[]");
+                this.SerializeItems(instance, itemType).ForEach(node => arrayElement.AppendChild(context.ImportNode(node, true)));
                 return arrayElement;
             }
             catch (Exception exception) when (exception is not SerializationException)
@@ -65,7 +73,7 @@ namespace Godot.Serialization.Specialized
 
                 IList array = Array.CreateInstance(itemType, node.ChildNodes.Count);
                 int index = 0;
-                foreach (object? item in ArraySerializer.DeserializeItems(node, itemType))
+                foreach (object? item in this.DeserializeItems(node, itemType))
                 {
                     array[index] = item;
                     index += 1;

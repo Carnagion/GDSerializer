@@ -61,25 +61,16 @@ namespace Godot.Serialization.Utility.Extensions
         }
 
         /// <summary>
-        /// Retrieves all fields defined in <paramref name="type"/> as well as its base <see cref="Type"/>s using <paramref name="flags"/>.
+        /// Retrieves all members defined in <paramref name="type"/> as well as its base <see cref="Type"/>s using <paramref name="flags"/>.
         /// </summary>
         /// <param name="type">The <see cref="Type"/> to search in.</param>
         /// <param name="flags">The binding constraints.</param>
-        /// <returns>An <see cref="IEnumerable{T}"/> of fields defined in <paramref name="type"/> and its base <see cref="Type"/>s.</returns>
-        public static IEnumerable<FieldInfo> GetAllFields(this Type type, BindingFlags flags = BindingFlags.Default)
+        /// <typeparam name="T">The <see cref="Type"/> of <see cref="MemberInfo"/> to retrieve.</typeparam>
+        /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="MemberInfo"/> defined in <paramref name="type"/> and its base <see cref="Type"/>s.</returns>
+        public static IEnumerable<T> GetAllMembers<T>(this Type type, BindingFlags flags = BindingFlags.Default) where T : MemberInfo
         {
-            return type.BaseType is null ? type.GetFields(flags) : type.GetFields(flags).Concat(type.BaseType.GetAllFields(flags));
-        }
-
-        /// <summary>
-        /// Retrieves all properties defined in <paramref name="type"/> as well as its base <see cref="Type"/>s using <paramref name="flags"/>.
-        /// </summary>
-        /// <param name="type">The <see cref="Type"/> to search in.</param>
-        /// <param name="flags">The binding constraints.</param>
-        /// <returns>An <see cref="IEnumerable{T}"/> of properties defined in <paramref name="type"/> and its base <see cref="Type"/>s.</returns>
-        public static IEnumerable<PropertyInfo> GetAllProperties(this Type type, BindingFlags flags = BindingFlags.Default)
-        {
-            return type.BaseType is null ? type.GetProperties(flags) : type.GetProperties(flags).Concat(type.BaseType.GetAllProperties(flags));
+            IEnumerable<T> members = type.GetMembers(flags).OfType<T>();
+            return type.BaseType is null ? members : members.Concat(type.BaseType.GetAllMembers<T>(flags));
         }
 
         /// <summary>
