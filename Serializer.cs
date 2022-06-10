@@ -43,6 +43,7 @@ namespace Godot.Serialization
                 {typeof(IEnumerable<>), new EnumerableSerializer(this)},
                 {typeof(Vector2), Serializer.vector},
                 {typeof(Vector3), Serializer.vector},
+                {typeof(Enum), new EnumSerializer()},
             };
         }
 
@@ -64,7 +65,7 @@ namespace Godot.Serialization
         /// <summary>
         /// An <see cref="OrderedDictionary{TKey,TValue}"/> of specialized <see cref="ISerializer"/>s for specific <see cref="Type"/>s. These serializers will be used by the <see cref="Serializer"/> when possible.
         /// </summary>
-        public OrderedDictionary<Type, ISerializer> Specialized // Must be static since other serializers create new Serializer instances, and they all need access to the same dictionary
+        public OrderedDictionary<Type, ISerializer> Specialized
         {
             get;
         }
