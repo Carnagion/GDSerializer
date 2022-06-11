@@ -3,7 +3,7 @@ using System.Xml;
 
 using Godot.Serialization.Utility.Extensions;
 
-namespace Godot.Serialization.Utility.Exceptions
+namespace Godot.Serialization
 {
     /// <summary>
     /// The exception that is thrown when there is a failed attempt at serializing an <see cref="object"/> or deserializing an <see cref="XmlNode"/>.

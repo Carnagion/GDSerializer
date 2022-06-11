@@ -6,7 +6,6 @@ using System.Xml;
 
 using Godot.Serialization.Specialized;
 using Godot.Serialization.Utility;
-using Godot.Serialization.Utility.Exceptions;
 using Godot.Serialization.Utility.Extensions;
 
 namespace Godot.Serialization
