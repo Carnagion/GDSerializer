@@ -20,7 +20,7 @@ namespace Godot.Serialization
         /// </summary>
         public Serializer()
         {
-            this.Specialized = new(19)
+            this.specialized = new(19)
             {
                 {typeof(string), Serializer.simple},
                 {typeof(char), Serializer.simple},
@@ -52,7 +52,7 @@ namespace Godot.Serialization
         /// <param name="specializedSerializers">The specialized serializers to use when (de)serializing specific <see cref="Type"/>s.</param>
         public Serializer(OrderedDictionary<Type, ISerializer> specializedSerializers)
         {
-            this.Specialized = specializedSerializers;
+            this.specialized = specializedSerializers;
         }
         
         private const BindingFlags instanceBindingFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
@@ -61,12 +61,17 @@ namespace Godot.Serialization
 
         private static readonly VectorSerializer vector = new();
 
+        private readonly OrderedDictionary<Type, ISerializer> specialized;
+
         /// <summary>
-        /// An <see cref="OrderedDictionary{TKey,TValue}"/> of specialized <see cref="ISerializer"/>s for specific <see cref="Type"/>s. These serializers will be used by the <see cref="Serializer"/> when possible.
+        /// Specialized <see cref="ISerializer"/>s for specific <see cref="Type"/>s. These serializers will be used by the <see cref="Serializer"/> when possible.
         /// </summary>
-        public OrderedDictionary<Type, ISerializer> Specialized
+        public IReadOnlyDictionary<Type, ISerializer> Specialized
         {
-            get;
+            get
+            {
+                return this.specialized;
+            }
         }
 
         /// <summary>
