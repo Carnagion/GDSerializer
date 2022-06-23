@@ -304,28 +304,28 @@ namespace Godot.Serialization
 
         private bool TryGetSpecialSerializerForType(Type type, [NotNullWhen(true)] out ISerializer? serializer)
         {
-            if (this.specialized.TryGetValue(type, out serializer))
+            if (this.Specialized.TryGetValue(type, out serializer))
             {
                 return true;
             }
             if (type.IsGenericType)
             {
-                Type? match = this.specialized.Keys.FirstOrDefault(type.IsExactlyGenericType);
-                match ??= this.specialized.Keys.FirstOrDefault(type.DerivesFromGenericType);
+                Type? match = this.Specialized.Keys.FirstOrDefault(type.IsExactlyGenericType);
+                match ??= this.Specialized.Keys.FirstOrDefault(type.DerivesFromGenericType);
                 if (match is null)
                 {
                     return false;
                 }
-                serializer = this.specialized[match];
+                serializer = this.Specialized[match];
             }
             else
             {
-                Type? match = this.specialized.Keys.FirstOrDefault(key => key.IsAssignableFrom(type));
+                Type? match = this.Specialized.Keys.FirstOrDefault(key => key.IsAssignableFrom(type));
                 if (match is null)
                 {
                     return false;
                 }
-                serializer = this.specialized[match];
+                serializer = this.Specialized[match];
             }
             return true;
         }
@@ -333,7 +333,7 @@ namespace Godot.Serialization
         private bool TryDeserializeReferencedNode(XmlNode node, out object? instance)
         {
             instance = null;
-            if (!this.referenceSources.Any())
+            if (!this.ReferenceSources.Any())
             {
                 return false;
             }
@@ -346,7 +346,7 @@ namespace Godot.Serialization
             {
                 return true;
             }
-            XmlNode referencedNode = (from source in this.referenceSources
+            XmlNode referencedNode = (from source in this.ReferenceSources
                                       select source.SelectSingleNode($"*[@Id='{referencedId}']")).FirstOrDefault() ?? throw new SerializationException(node, $"Referenced XML node with ID \"{referencedId}\" not found");
             instance = this.Deserialize(referencedNode);
             return true;
