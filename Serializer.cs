@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
@@ -18,7 +19,8 @@ namespace Godot.Serialization
         /// <summary>
         /// Initialises a new <see cref="Serializer"/> with the default specialized serializers.
         /// </summary>
-        public Serializer()
+        /// <param name="referenceSources">An array of <see cref="XmlNode"/>s to use when deserializing <see cref="XmlNode"/>s that refer other <see cref="XmlNode"/>s through an ID.</param>
+        public Serializer(params XmlNode[] referenceSources)
         {
             this.specialized = new(19)
             {
@@ -44,15 +46,20 @@ namespace Godot.Serialization
                 {typeof(Vector3), Serializer.vector},
                 {typeof(Enum), new EnumSerializer()},
             };
+            this.referenceSources = referenceSources;
+            this.referenceStorage = referenceSources.Any() ? new() : null!;
         }
 
         /// <summary>
         /// Initialises a new <see cref="Serializer"/> with the specified parameters.
         /// </summary>
         /// <param name="specializedSerializers">The specialized serializers to use when (de)serializing specific <see cref="Type"/>s.</param>
-        public Serializer(OrderedDictionary<Type, ISerializer> specializedSerializers)
+        /// <param name="referenceSources">An array of <see cref="XmlNode"/>s to use when deserializing <see cref="XmlNode"/>s that refer other <see cref="XmlNode"/>s through an ID.</param>
+        public Serializer(OrderedDictionary<Type, ISerializer> specializedSerializers, params XmlNode[] referenceSources)
         {
             this.specialized = specializedSerializers;
+            this.referenceSources = referenceSources;
+            this.referenceStorage = referenceSources.Any() ? new() : null!;
         }
         
         private const BindingFlags instanceBindingFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
@@ -63,6 +70,10 @@ namespace Godot.Serialization
 
         private readonly OrderedDictionary<Type, ISerializer> specialized;
 
+        private readonly XmlNode[] referenceSources;
+
+        private readonly Dictionary<string, object?> referenceStorage;
+
         /// <summary>
         /// Specialized <see cref="ISerializer"/>s for specific <see cref="Type"/>s. These serializers will be used by the <see cref="Serializer"/> when possible.
         /// </summary>
@@ -71,6 +82,17 @@ namespace Godot.Serialization
             get
             {
                 return this.specialized;
+            }
+        }
+
+        /// <summary>
+        /// An <see cref="IEnumerable{T}"/> of <see cref="XmlNode"/>s that contain <see cref="XmlNode"/>s with IDs referenced by other <see cref="XmlNode"/>s.
+        /// </summary>
+        public IEnumerable<XmlNode> ReferenceSources
+        {
+            get
+            {
+                return this.referenceSources;
             }
         }
 
@@ -86,8 +108,7 @@ namespace Godot.Serialization
             type ??= instance.GetType();
             
             // Use a more specialized serializer if possible
-            ISerializer? serializer = this.GetSpecialSerializerForType(type);
-            if (serializer is not null)
+            if (this.TryGetSpecialSerializerForType(type, out ISerializer? serializer))
             {
                 return serializer.Serialize(instance, type);
             }
@@ -174,10 +195,15 @@ namespace Godot.Serialization
             }
             
             type ??= node.GetTypeToDeserialize() ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
+
+            // Use a previously deserialized node if referenced
+            if (this.TryDeserializeReferencedNode(node, out object? referenced))
+            {
+                return referenced;
+            }
             
             // Use a more specialized deserializer if possible
-            ISerializer? serializer = this.GetSpecialSerializerForType(type);
-            if (serializer is not null)
+            if (this.TryGetSpecialSerializerForType(type, out ISerializer? serializer))
             {
                 return serializer.Deserialize(node, type);
             }
@@ -239,6 +265,13 @@ namespace Godot.Serialization
                  where method.GetCustomAttribute<AfterDeserializationAttribute>() is not null
                  select method).ForEach(method => method.Invoke(method.IsStatic ? null : instance, null));
                 
+                // Add deserialized instance to reference storage if it has an ID
+                string? id = node.Attributes?["Id"]?.InnerText;
+                if (id is not null)
+                {
+                    this.referenceStorage.Add(id, instance);
+                }
+                
                 return instance;
             }
             catch (Exception exception) when (exception is not SerializationException)
@@ -269,31 +302,54 @@ namespace Godot.Serialization
             return (T?)this.Deserialize(node, typeof(T));
         }
 
-        private ISerializer? GetSpecialSerializerForType(Type type)
+        private bool TryGetSpecialSerializerForType(Type type, [NotNullWhen(true)] out ISerializer? serializer)
         {
-            ISerializer? serializer = this.Specialized.GetValueOrDefault(type);
-            if (serializer is not null)
+            if (this.specialized.TryGetValue(type, out serializer))
             {
-                return serializer;
+                return true;
             }
             if (type.IsGenericType)
             {
-                Type? match = this.Specialized.Keys.FirstOrDefault(type.IsExactlyGenericType);
-                match ??= this.Specialized.Keys.FirstOrDefault(type.DerivesFromGenericType);
-                if (match is not null)
+                Type? match = this.specialized.Keys.FirstOrDefault(type.IsExactlyGenericType);
+                match ??= this.specialized.Keys.FirstOrDefault(type.DerivesFromGenericType);
+                if (match is null)
                 {
-                    return this.Specialized[match];
+                    return false;
                 }
+                serializer = this.specialized[match];
             }
             else
             {
-                Type? match = this.Specialized.Keys.FirstOrDefault(key => key.IsAssignableFrom(type));
-                if (match is not null)
+                Type? match = this.specialized.Keys.FirstOrDefault(key => key.IsAssignableFrom(type));
+                if (match is null)
                 {
-                    serializer = this.Specialized[match];
+                    return false;
                 }
+                serializer = this.specialized[match];
             }
-            return serializer;
+            return true;
+        }
+
+        private bool TryDeserializeReferencedNode(XmlNode node, out object? instance)
+        {
+            instance = null;
+            if (!this.referenceSources.Any())
+            {
+                return false;
+            }
+            string? referencedId = node.Attributes?["Refer"]?.InnerText;
+            if (referencedId is null)
+            {
+                return false;
+            }
+            if (this.referenceStorage.TryGetValue(referencedId, out instance))
+            {
+                return true;
+            }
+            XmlNode referencedNode = (from source in this.referenceSources
+                                      select source.SelectSingleNode($"*[@Id='{referencedId}']")).FirstOrDefault() ?? throw new SerializationException(node, $"Referenced XML node with ID \"{referencedId}\" not found");
+            instance = this.Deserialize(referencedNode);
+            return true;
         }
     }
 }
