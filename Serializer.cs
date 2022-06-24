@@ -19,8 +19,8 @@ namespace Godot.Serialization
         /// <summary>
         /// Initialises a new <see cref="Serializer"/> with the default specialized serializers.
         /// </summary>
-        /// <param name="referenceSources">An array of <see cref="XmlNode"/>s to use when deserializing <see cref="XmlNode"/>s that refer other <see cref="XmlNode"/>s through an ID.</param>
-        public Serializer(params XmlNode[] referenceSources)
+        /// <param name="referenceSources">An <see cref="IEnumerable{T}"/> of <see cref="XmlNode"/>s to use when deserializing <see cref="XmlNode"/>s that refer other <see cref="XmlNode"/>s through an ID.</param>
+        public Serializer(IEnumerable<XmlNode>? referenceSources = null)
         {
             this.specialized = new(19)
             {
@@ -46,20 +46,20 @@ namespace Godot.Serialization
                 {typeof(Vector3), Serializer.vector},
                 {typeof(Enum), new EnumSerializer()},
             };
-            this.referenceSources = referenceSources;
-            this.referenceStorage = referenceSources.Any() ? new() : null!;
+            this.referenceSources = referenceSources?.ToArray();
+            this.referenceStorage = this.referenceSources is null ? null : new();
         }
 
         /// <summary>
         /// Initialises a new <see cref="Serializer"/> with the specified parameters.
         /// </summary>
         /// <param name="specializedSerializers">The specialized serializers to use when (de)serializing specific <see cref="Type"/>s.</param>
-        /// <param name="referenceSources">An array of <see cref="XmlNode"/>s to use when deserializing <see cref="XmlNode"/>s that refer other <see cref="XmlNode"/>s through an ID.</param>
-        public Serializer(OrderedDictionary<Type, ISerializer> specializedSerializers, params XmlNode[] referenceSources)
+        /// <param name="referenceSources">An <see cref="IEnumerable{T}"/> of <see cref="XmlNode"/>s to use when deserializing <see cref="XmlNode"/>s that refer other <see cref="XmlNode"/>s through an ID.</param>
+        public Serializer(OrderedDictionary<Type, ISerializer> specializedSerializers, IEnumerable<XmlNode>? referenceSources = null)
         {
             this.specialized = specializedSerializers;
-            this.referenceSources = referenceSources;
-            this.referenceStorage = referenceSources.Any() ? new() : null!;
+            this.referenceSources = referenceSources?.ToArray();
+            this.referenceStorage = this.referenceSources is null ? null : new();
         }
         
         private const BindingFlags instanceBindingFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
@@ -70,9 +70,9 @@ namespace Godot.Serialization
 
         private readonly OrderedDictionary<Type, ISerializer> specialized;
 
-        private readonly XmlNode[] referenceSources;
+        private readonly XmlNode[]? referenceSources;
 
-        private readonly Dictionary<string, object?> referenceStorage;
+        private readonly Dictionary<string, object?>? referenceStorage;
 
         /// <summary>
         /// Specialized <see cref="ISerializer"/>s for specific <see cref="Type"/>s. These serializers will be used by the <see cref="Serializer"/> when possible.
@@ -92,7 +92,7 @@ namespace Godot.Serialization
         {
             get
             {
-                return this.referenceSources;
+                return this.referenceSources ?? Enumerable.Empty<XmlNode>();
             }
         }
 
@@ -269,7 +269,7 @@ namespace Godot.Serialization
                 string? id = node.Attributes?["Id"]?.InnerText;
                 if (id is not null)
                 {
-                    this.referenceStorage.Add(id, instance);
+                    this.referenceStorage?.Add(id, instance);
                 }
                 
                 return instance;
@@ -333,7 +333,7 @@ namespace Godot.Serialization
         private bool TryDeserializeReferencedNode(XmlNode node, out object? instance)
         {
             instance = null;
-            if (!this.ReferenceSources.Any())
+            if (this.referenceStorage is null)
             {
                 return false;
             }
