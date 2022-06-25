@@ -22,7 +22,7 @@ namespace Godot.Serialization
         /// <param name="referenceSources">An <see cref="IEnumerable{T}"/> of <see cref="XmlNode"/>s to use when deserializing <see cref="XmlNode"/>s that refer other <see cref="XmlNode"/>s through an ID.</param>
         public Serializer(IEnumerable<XmlNode>? referenceSources = null)
         {
-            this.specialized = new(19)
+            this.Specialized = new(19)
             {
                 {typeof(string), Serializer.simple},
                 {typeof(char), Serializer.simple},
@@ -46,8 +46,8 @@ namespace Godot.Serialization
                 {typeof(Vector3), Serializer.vector},
                 {typeof(Enum), new EnumSerializer()},
             };
-            this.referenceSources = referenceSources?.ToArray();
-            this.referenceStorage = this.referenceSources is null ? null : new();
+            this.ReferenceSources = referenceSources?.ToHashSet();
+            this.referenceStorage = this.ReferenceSources is null ? null : new();
         }
 
         /// <summary>
@@ -57,9 +57,9 @@ namespace Godot.Serialization
         /// <param name="referenceSources">An <see cref="IEnumerable{T}"/> of <see cref="XmlNode"/>s to use when deserializing <see cref="XmlNode"/>s that refer other <see cref="XmlNode"/>s through an ID.</param>
         public Serializer(OrderedDictionary<Type, ISerializer> specializedSerializers, IEnumerable<XmlNode>? referenceSources = null)
         {
-            this.specialized = specializedSerializers;
-            this.referenceSources = referenceSources?.ToArray();
-            this.referenceStorage = this.referenceSources is null ? null : new();
+            this.Specialized = specializedSerializers;
+            this.ReferenceSources = referenceSources?.ToHashSet();
+            this.referenceStorage = this.ReferenceSources is null ? null : new();
         }
         
         private const BindingFlags instanceBindingFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
@@ -68,32 +68,22 @@ namespace Godot.Serialization
 
         private static readonly VectorSerializer vector = new();
 
-        private readonly OrderedDictionary<Type, ISerializer> specialized;
-
-        private readonly XmlNode[]? referenceSources;
-
         private readonly Dictionary<string, object?>? referenceStorage;
 
         /// <summary>
         /// Specialized <see cref="ISerializer"/>s for specific <see cref="Type"/>s. These serializers will be used by the <see cref="Serializer"/> when possible.
         /// </summary>
-        public IReadOnlyDictionary<Type, ISerializer> Specialized
+        public OrderedDictionary<Type, ISerializer> Specialized
         {
-            get
-            {
-                return this.specialized;
-            }
+            get;
         }
 
         /// <summary>
-        /// An <see cref="IEnumerable{T}"/> of <see cref="XmlNode"/>s that contain <see cref="XmlNode"/>s with IDs referenced by other <see cref="XmlNode"/>s.
+        /// A <see cref="HashSet{T}"/> of <see cref="XmlNode"/>s that contain <see cref="XmlNode"/>s with IDs referenced by other <see cref="XmlNode"/>s.
         /// </summary>
-        public IEnumerable<XmlNode> ReferenceSources
+        public HashSet<XmlNode>? ReferenceSources
         {
-            get
-            {
-                return this.referenceSources ?? Enumerable.Empty<XmlNode>();
-            }
+            get;
         }
 
         /// <summary>
@@ -333,7 +323,7 @@ namespace Godot.Serialization
         private bool TryDeserializeReferencedNode(XmlNode node, out object? instance)
         {
             instance = null;
-            if (this.referenceStorage is null)
+            if (this.referenceStorage is null || this.ReferenceSources is null)
             {
                 return false;
             }
