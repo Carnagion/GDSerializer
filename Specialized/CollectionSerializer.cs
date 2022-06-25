@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Xml;
 
-using Godot.Serialization.Utility.Exceptions;
 using Godot.Serialization.Utility.Extensions;
 
 namespace Godot.Serialization.Specialized

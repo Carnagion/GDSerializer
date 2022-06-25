@@ -3,7 +3,6 @@ using System.Collections;
 using System.Linq;
 using System.Xml;
 
-using Godot.Serialization.Utility.Exceptions;
 using Godot.Serialization.Utility.Extensions;
 
 namespace Godot.Serialization.Specialized
