@@ -90,6 +90,35 @@ namespace Godot.Serialization
         }
         
         /// <summary>
+        /// Determines if <paramref name="property"/> is a (de)serializable property.
+        /// </summary>
+        /// <param name="property">The <see cref="PropertyInfo"/> to check.</param>
+        /// <returns><see langword="true"/> if <paramref name="property"/> can be (de)serialized by a <see cref="Serializer"/>, else <see langword="false"/>.</returns>
+        public static bool CanSerialize(PropertyInfo property)
+        {
+            return property.CanRead
+                && property.CanWrite
+                && !property.GetIndexParameters().Any()
+                && property.GetCustomAttribute<CompilerGeneratedAttribute>() is null
+                && property.GetMethod.GetCustomAttribute<CompilerGeneratedAttribute>() is null
+                && !Serializer.forbiddenTypes.Contains(property.PropertyType)
+                && (property.GetCustomAttribute<SerializeAttribute>()?.Serializable ?? true);
+        }
+        
+        /// <summary>
+        /// Determines if <paramref name="field"/> is a (de)serializable field.
+        /// </summary>
+        /// <param name="field">The <see cref="FieldInfo"/> to check.</param>
+        /// <returns><see langword="true"/> if <paramref name="field"/> can be (de)serialized by a <see cref="Serializer"/>, else <see langword="false"/>.</returns>
+        public static bool CanSerialize(FieldInfo field)
+        {
+            return field.GetCustomAttribute<CompilerGeneratedAttribute>() is null 
+                && !field.FieldType.IsPointer
+                && !Serializer.forbiddenTypes.Contains(field.FieldType)
+                && (field.GetCustomAttribute<SerializeAttribute>()?.Serializable ?? true);
+        }
+        
+        /// <summary>
         /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
         /// </summary>
         /// <param name="instance">The <see cref="object"/> to serialize.</param>
@@ -127,7 +156,7 @@ namespace Godot.Serialization
                 }
                 
                 // Recursively serialize properties
-                foreach (PropertyInfo property in type.GetAllMembers<PropertyInfo>(Serializer.instanceBindingFlags).Where(property => property.IsSerializable()))
+                foreach (PropertyInfo property in type.GetAllMembers<PropertyInfo>(Serializer.instanceBindingFlags).Where(Serializer.CanSerialize))
                 {
                     object? value = property.GetValue(instance);
                     if (value is null)
@@ -142,7 +171,7 @@ namespace Godot.Serialization
                 }
                 
                 // Recursively serialize fields
-                foreach (FieldInfo field in type.GetAllMembers<FieldInfo>(Serializer.instanceBindingFlags).Where(field => field.IsSerializable()))
+                foreach (FieldInfo field in type.GetAllMembers<FieldInfo>(Serializer.instanceBindingFlags).Where(Serializer.CanSerialize))
                 {
                     object? value = field.GetValue(instance);
                     if (value is null)
