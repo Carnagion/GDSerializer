@@ -24,7 +24,7 @@ namespace Godot.Serialization.Specialized
             {
                 throw new SerializationException(instance, $"\"{enumType.GetDisplayName()}\" cannot be serialized by {typeof(EnumerableSerializer).GetDisplayName()}");
             }
-
+            
             try
             {
                 XmlDocument context = new();
@@ -57,7 +57,7 @@ namespace Godot.Serialization.Specialized
             {
                 throw new SerializationException(node, "Node contains no textual data");
             }
-
+            
             try
             {
                 string text = node.ChildNodes[0].InnerText;

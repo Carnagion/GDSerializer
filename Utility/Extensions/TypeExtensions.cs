@@ -30,7 +30,7 @@ namespace Godot.Utility.Extensions
             }
             return type.BaseType?.DerivesFromGenericType(genericType) ?? false;
         }
-
+        
         /// <summary>
         /// Checks if <paramref name="type"/> is the same as <paramref name="genericType"/>.
         /// </summary>
@@ -48,7 +48,7 @@ namespace Godot.Utility.Extensions
                 return false;
             }
         }
-
+        
         /// <summary>
         /// Returns the display name for <paramref name="type"/>.
         /// </summary>
@@ -59,7 +59,7 @@ namespace Godot.Utility.Extensions
             using CSharpCodeProvider provider = new();
             return provider.GetTypeOutput(new(type));
         }
-
+        
         /// <summary>
         /// Retrieves all members defined in <paramref name="type"/> as well as its base <see cref="Type"/>s using <paramref name="flags"/>.
         /// </summary>
@@ -72,7 +72,7 @@ namespace Godot.Utility.Extensions
             IEnumerable<T> members = type.GetMembers(flags).OfType<T>();
             return type.BaseType is null ? members : members.Concat(type.BaseType.GetAllMembers<T>(flags));
         }
-
+        
         /// <summary>
         /// Searches for the specified field in <paramref name="type"/> and its base <see cref="Type"/>s.
         /// </summary>
@@ -84,7 +84,7 @@ namespace Godot.Utility.Extensions
         {
             return type.GetField(name, flags) ?? type.BaseType?.FindField(name, flags);
         }
-
+        
         /// <summary>
         /// Searches for the specified property in <paramref name="type"/> and its base <see cref="Type"/>s.
         /// </summary>

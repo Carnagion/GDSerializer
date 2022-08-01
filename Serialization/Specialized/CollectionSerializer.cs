@@ -22,7 +22,7 @@ namespace Godot.Serialization.Specialized
         {
             this.itemSerializer = itemSerializer;
         }
-
+        
         private readonly ISerializer itemSerializer;
         
         /// <summary>
@@ -55,7 +55,7 @@ namespace Godot.Serialization.Specialized
                 throw new SerializationException(instance, exception);
             }
         }
-
+        
         /// <summary>
         /// Deserializes <paramref name="node"/> into an <see cref="object"/>.
         /// </summary>
@@ -70,17 +70,17 @@ namespace Godot.Serialization.Specialized
             {
                 throw new SerializationException(node, $"\"{collectionType.GetDisplayName()}\" cannot be (de)serialized by {typeof(CollectionSerializer).GetDisplayName()}");
             }
-
+            
             try
             {
                 MethodInfo add = collectionType.GetMethod("Add")!;
                 Type itemType = collectionType.GenericTypeArguments[0];
-
+                
                 if (collectionType.IsExactlyGenericType(typeof(ICollection<>)))
                 {
                     collectionType = typeof(List<>).MakeGenericType(itemType);
                 }
-            
+                
                 object collection = Activator.CreateInstance(collectionType, true) ?? throw new SerializationException(node, $"Unable to instantiate {collectionType.GetDisplayName()}");
                 this.DeserializeItems(node, itemType).ForEach(item => add.Invoke(collection, new[] {item,}));
                 return collection;
@@ -90,7 +90,7 @@ namespace Godot.Serialization.Specialized
                 throw new SerializationException(node, exception);
             }
         }
-
+        
         /// <summary>
         /// Serializes all items in the collection <paramref name="instance"/>. It must implement <see cref="ICollection{T}"/>.
         /// </summary>
@@ -113,7 +113,7 @@ namespace Godot.Serialization.Specialized
                 yield return itemElement;
             }
         }
-
+        
         /// <summary>
         /// Deserializes the children of <paramref name="node"/> as items of an <see cref="ICollection{T}"/>.
         /// </summary>

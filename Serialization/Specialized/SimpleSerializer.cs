@@ -27,13 +27,13 @@ namespace Godot.Serialization.Specialized
             {
                 throw new SerializationException(instance, $"\"{type.GetDisplayName()}\" is not a suitable {nameof(Type)} for {typeof(SimpleSerializer).GetDisplayName()}");
             }
-
+            
             XmlDocument context = new();
             XmlElement element = context.CreateElement(type.GetDisplayName());
             element.AppendChild(context.CreateTextNode(instance.ToString()));
             return element;
         }
-
+        
         /// <summary>
         /// Deserializes <paramref name="node"/> into a simple type.
         /// </summary>
@@ -47,24 +47,24 @@ namespace Godot.Serialization.Specialized
             {
                 throw new SerializationException(node, "Node contains no textual data");
             }
-
+            
             string text = node.ChildNodes[0].InnerText;
-
+            
             if (type == typeof(string))
             {
                 return text;
             }
-
+            
             if (type == typeof(char))
             {
                 return Char.Parse(text);
             }
-
+            
             if (type == typeof(bool))
             {
                 return Boolean.Parse(text);
             }
-
+            
             if (type == typeof(sbyte))
             {
                 return SByte.Parse(text);
@@ -73,7 +73,7 @@ namespace Godot.Serialization.Specialized
             {
                 return Byte.Parse(text);
             }
-
+            
             if (type == typeof(short))
             {
                 return Int16.Parse(text);
@@ -82,7 +82,7 @@ namespace Godot.Serialization.Specialized
             {
                 return UInt16.Parse(text);
             }
-
+            
             if (type == typeof(int))
             {
                 return Int32.Parse(text);
@@ -91,7 +91,7 @@ namespace Godot.Serialization.Specialized
             {
                 return UInt32.Parse(text);
             }
-
+            
             if (type == typeof(long))
             {
                 return Int64.Parse(text);
@@ -100,7 +100,7 @@ namespace Godot.Serialization.Specialized
             {
                 return UInt64.Parse(text);
             }
-
+            
             if (type == typeof(float))
             {
                 return Single.Parse(text);
@@ -113,7 +113,7 @@ namespace Godot.Serialization.Specialized
             {
                 return Decimal.Parse(text);
             }
-
+            
             throw new SerializationException(node, $"Unable to find simple {nameof(Type)} suitable for {typeof(SimpleSerializer).GetDisplayName()} ");
         }
     }

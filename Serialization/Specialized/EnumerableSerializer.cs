@@ -34,7 +34,7 @@ namespace Godot.Serialization.Specialized
             {
                 throw new SerializationException(instance, $"\"{enumerableType.GetDisplayName()}\" cannot be (de)serialized by {typeof(EnumerableSerializer).GetDisplayName()}");
             }
-
+            
             try
             {
                 Type itemType = enumerableType.GenericTypeArguments[0];
@@ -50,7 +50,7 @@ namespace Godot.Serialization.Specialized
                 throw new SerializationException(instance, exception);
             }
         }
-
+        
         /// <summary>
         /// Deserializes <paramref name="node"/> into an <see cref="object"/>.
         /// </summary>
@@ -65,7 +65,7 @@ namespace Godot.Serialization.Specialized
             {
                 throw new SerializationException(node, $"\"{enumerableType.GetDisplayName()}\" cannot be (de)serialized by {typeof(EnumerableSerializer).GetDisplayName()}");
             }
-
+            
             try
             {
                 Type itemType = enumerableType.GenericTypeArguments[0];

@@ -17,7 +17,7 @@ namespace Godot.Serialization.Specialized
             {typeof(Vector2), new(@"\(\s*(?<x>[+-]?\d+(?:\.\d+)?)\s*,\s*(?<y>[+-]?\d+(?:\.\d+)?)\s*\)")},
             {typeof(Vector3), new(@"\(\s*(?<x>[+-]?\d+(?:\.\d+)?)\s*,\s*(?<y>[+-]?\d+(?:\.\d+)?)\s*,\s*(?<z>[+-]?\d+(?:\.\d+)?)\s*\)")},
         };
-
+        
         /// <summary>
         /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
         /// </summary>
@@ -42,7 +42,7 @@ namespace Godot.Serialization.Specialized
                     throw new SerializationException(instance, $"\"{instance.GetType().GetDisplayName()}\" cannot be serialized by {typeof(VectorSerializer).GetDisplayName()}");
             }
         }
-
+        
         /// <summary>
         /// Deserializes <paramref name="node"/> into an <see cref="object"/>.
         /// </summary>
@@ -61,7 +61,7 @@ namespace Godot.Serialization.Specialized
             {
                 throw new SerializationException(node, "Node contains no textual data");
             }
-
+            
             try
             {
                 string text = node.ChildNodes[0].InnerText.Trim();
@@ -70,7 +70,7 @@ namespace Godot.Serialization.Specialized
                 {
                     throw new SerializationException(node, "Invalid vector format");
                 }
-
+                
                 float x = Single.Parse(match.Groups["x"].Value);
                 float y = Single.Parse(match.Groups["y"].Value);
                 if (type == typeof(Vector2))

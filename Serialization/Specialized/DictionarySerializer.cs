@@ -22,7 +22,7 @@ namespace Godot.Serialization.Specialized
         {
             this.itemSerializer = itemSerializer;
         }
-
+        
         private readonly ISerializer itemSerializer;
         
         /// <summary>
@@ -49,11 +49,11 @@ namespace Godot.Serialization.Specialized
                 
                 PropertyInfo keyProperty = pairType.GetProperty("Key")!;
                 PropertyInfo valueProperty = pairType.GetProperty("Value")!;
-            
+                
                 XmlDocument context = new();
                 XmlElement dictionaryElement = context.CreateElement("Dictionary");
                 dictionaryElement.SetAttribute("Type", dictionaryType.FullName);
-
+                
                 foreach (object item in (IEnumerable)instance)
                 {
                     object key = keyProperty.GetValue(item)!;
@@ -83,7 +83,7 @@ namespace Godot.Serialization.Specialized
                     
                     dictionaryElement.AppendChild(itemElement);
                 }
-
+                
                 return dictionaryElement;
             }
             catch (Exception exception) when (exception is not SerializationException)
@@ -91,7 +91,7 @@ namespace Godot.Serialization.Specialized
                 throw new SerializationException(instance, exception);
             }
         }
-
+        
         /// <summary>
         /// Deserializes <paramref name="node"/> into an <see cref="object"/>.
         /// </summary>
@@ -106,19 +106,19 @@ namespace Godot.Serialization.Specialized
             {
                 throw new SerializationException(node, $"\"{dictionaryType.GetDisplayName()}\" cannot be (de)serialized by {typeof(DictionarySerializer).GetDisplayName()}");
             }
-
+            
             try
             {
                 MethodInfo add = dictionaryType.GetMethod("Add")!;
                 
                 Type keyType = dictionaryType.GenericTypeArguments[0];
                 Type valueType = dictionaryType.GenericTypeArguments[1];
-
+                
                 if (dictionaryType.IsExactlyGenericType(typeof(IDictionary<,>)))
                 {
                     dictionaryType = typeof(Dictionary<,>).MakeGenericType(keyType, valueType);
                 }
-
+                
                 object dictionary = Activator.CreateInstance(dictionaryType, true) ?? throw new SerializationException(node, $"Unable to instantiate {dictionaryType.GetDisplayName()}");
                 foreach (XmlNode child in from XmlNode child in node.ChildNodes
                                           where child.NodeType is XmlNodeType.Element
@@ -135,7 +135,7 @@ namespace Godot.Serialization.Specialized
                     XmlNode value = child.ChildNodes
                         .Cast<XmlNode>()
                         .SingleOrDefault(grandchild => grandchild.Name == "value") ?? throw new SerializationException(child, "No value node present");
-
+                    
                     add.Invoke(dictionary, new[] {this.itemSerializer.Deserialize(key, key.GetTypeToDeserialize() ?? keyType), this.itemSerializer.Deserialize(value, value.GetTypeToDeserialize() ?? valueType),});
                 }
                 return dictionary;

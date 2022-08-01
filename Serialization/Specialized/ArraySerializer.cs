@@ -34,11 +34,11 @@ namespace Godot.Serialization.Specialized
             {
                 throw new SerializationException(instance, $"\"{arrayType.GetDisplayName()}\" cannot be serialized by {typeof(ArraySerializer).GetDisplayName()}");
             }
-
+            
             try
             {
                 Type itemType = arrayType.GetElementType()!;
-
+                
                 XmlDocument context = new();
                 XmlElement arrayElement = context.CreateElement("Array");
                 arrayElement.SetAttribute("Type", $"{itemType.FullName}[]");
@@ -65,11 +65,11 @@ namespace Godot.Serialization.Specialized
             {
                 throw new SerializationException(node, $"\"{arrayType.GetDisplayName()}\" cannot be deserialized by {typeof(ArraySerializer).GetDisplayName()}");
             }
-
+            
             try
             {
                 Type itemType = arrayType.GetElementType()!;
-
+                
                 IList array = Array.CreateInstance(itemType, node.ChildNodes.Count);
                 int index = 0;
                 foreach (object? item in this.DeserializeItems(node, itemType))

@@ -50,7 +50,7 @@ namespace Godot.Serialization
             this.ReferenceSources = referenceSources?.ToHashSet();
             this.referenceStorage = this.ReferenceSources is null ? null : new();
         }
-
+        
         /// <summary>
         /// Initialises a new <see cref="Serializer"/> with the specified parameters.
         /// </summary>
@@ -64,15 +64,15 @@ namespace Godot.Serialization
         }
         
         private const BindingFlags instanceBindingFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
-
+        
         private static readonly SimpleSerializer simple = new();
-
+        
         private static readonly VectorSerializer vector = new();
-
+        
         private readonly Dictionary<string, object?>? referenceStorage;
         
         private static readonly Type[] forbiddenTypes = {typeof(Pointer), typeof(IntPtr),};
-
+        
         /// <summary>
         /// Specialized <see cref="ISerializer"/>s for specific <see cref="Type"/>s. These serializers will be used by the <see cref="Serializer"/> when possible.
         /// </summary>
@@ -80,7 +80,7 @@ namespace Godot.Serialization
         {
             get;
         }
-
+        
         /// <summary>
         /// A <see cref="HashSet{T}"/> of <see cref="XmlNode"/>s that contain <see cref="XmlNode"/>s with IDs referenced by other <see cref="XmlNode"/>s.
         /// </summary>
@@ -88,7 +88,7 @@ namespace Godot.Serialization
         {
             get;
         }
-
+        
         /// <summary>
         /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
         /// </summary>
@@ -105,7 +105,7 @@ namespace Godot.Serialization
             {
                 return serializer.Serialize(instance, type);
             }
-
+            
             try
             {
                 XmlDocument context = new();
@@ -125,7 +125,7 @@ namespace Godot.Serialization
                 {
                     element = context.CreateElement(type.GetDisplayName());
                 }
-
+                
                 // Recursively serialize properties
                 foreach (PropertyInfo property in from property in type.GetAllMembers<PropertyInfo>(Serializer.instanceBindingFlags)
                                                   where property.IsSerializable()
@@ -159,12 +159,12 @@ namespace Godot.Serialization
                         .ForEach(child => node.AppendChild(context.ImportNode(child, true)));
                     element.AppendChild(node);
                 }
-
+                
                 // Invoke all [AfterSerialization] methods
                 (from method in type.GetAllMembers<MethodInfo>()
                  where method.GetCustomAttribute<AfterSerializationAttribute>() is not null
                  select method).ForEach(method => method.Invoke(method.IsStatic ? null : instance, null));
-
+                
                 return element;
             }
             catch (Exception exception) when (exception is not SerializationException)
@@ -172,7 +172,7 @@ namespace Godot.Serialization
                 throw new SerializationException(instance, exception);
             }
         }
-
+        
         /// <summary>
         /// Deserializes <paramref name="node"/> into an <see cref="object"/>.
         /// </summary>
@@ -188,7 +188,7 @@ namespace Godot.Serialization
             }
             
             type ??= node.GetTypeToDeserialize() ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
-
+            
             // Use a previously deserialized node if referenced
             if (this.TryDeserializeReferencedNode(node, out object? referenced))
             {
@@ -200,11 +200,11 @@ namespace Godot.Serialization
             {
                 return serializer.Deserialize(node, type);
             }
-
+            
             try
             {
                 HashSet<MemberInfo> deserialized = new();
-
+                
                 object instance = Activator.CreateInstance(type, true) ?? throw new SerializationException(node, $"Unable to instantiate {type.GetDisplayName()}");
                 foreach (XmlNode child in from XmlNode child in node.ChildNodes
                                           where child.NodeType is XmlNodeType.Element
@@ -226,7 +226,7 @@ namespace Godot.Serialization
                         deserialized.Add(property);
                         continue;
                     }
-                
+                    
                     // Recursively deserialize field
                     FieldInfo? field = type.FindField(child.Name, Serializer.instanceBindingFlags);
                     if (field is not null)
@@ -239,10 +239,10 @@ namespace Godot.Serialization
                         deserialized.Add(field);
                         continue;
                     }
-
+                    
                     throw new SerializationException(child, $"{type.GetDisplayName()} has no field or property named \"{child.Name}\"");
                 }
-
+                
                 // Ensure that properties/fields with [Serialize(true)] have been deserialized and those with [Serialize(false)] have not been deserialized
                 MemberInfo[] members = type.GetMembers(Serializer.instanceBindingFlags);
                 if (!deserialized.ContainsAll(from member in members 
@@ -252,7 +252,7 @@ namespace Godot.Serialization
                 {
                     throw new SerializationException(node, $"One or more mandatory properties or fields of {type.GetDisplayName()} were not deserialized");
                 }
-
+                
                 // Invoke all [AfterDeserialization] methods
                 (from method in type.GetAllMembers<MethodInfo>()
                  where method.GetCustomAttribute<AfterDeserializationAttribute>() is not null
@@ -272,7 +272,7 @@ namespace Godot.Serialization
                 throw new SerializationException(node, exception);
             }
         }
-
+        
         /// <summary>
         /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
         /// </summary>
@@ -283,7 +283,7 @@ namespace Godot.Serialization
         {
             return this.Serialize(instance, typeof(T));
         }
-
+        
         /// <summary>
         /// Deserializes <paramref name="node"/> into an <see cref="object"/>.
         /// </summary>
@@ -294,7 +294,7 @@ namespace Godot.Serialization
         {
             return (T?)this.Deserialize(node, typeof(T));
         }
-
+        
         private bool TryGetSpecialSerializerForType(Type type, [NotNullWhen(true)] out ISerializer? serializer)
         {
             if (this.Specialized.TryGetValue(type, out serializer))
@@ -322,7 +322,7 @@ namespace Godot.Serialization
             }
             return true;
         }
-
+        
         private bool TryDeserializeReferencedNode(XmlNode node, out object? instance)
         {
             instance = null;
@@ -344,8 +344,8 @@ namespace Godot.Serialization
             instance = this.Deserialize(referencedNode);
             return true;
         }
-
-        private bool CanSerialize(FieldInfo field)
+        
+        private static bool CanSerialize(FieldInfo field)
         {
             return field.GetCustomAttribute<CompilerGeneratedAttribute>() is null
                 && !field.FieldType.IsPointer

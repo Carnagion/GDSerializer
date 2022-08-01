@@ -18,7 +18,7 @@ namespace Godot.Serialization
         public SerializationException(XmlNode node, string message) : base($"Could not deserialize XML node {node.Name}: {message}")
         {
         }
-
+        
         /// <summary>
         /// Initializes a new instance of <see cref="SerializationException"/>.
         /// </summary>
@@ -27,7 +27,7 @@ namespace Godot.Serialization
         public SerializationException(XmlNode node, Exception cause) : base($"Could not deserialize XML node {node.Name}.{System.Environment.NewLine}{cause}")
         {
         }
-
+        
         /// <summary>
         /// Initializes a new instance of <see cref="SerializationException"/>.
         /// </summary>
@@ -36,7 +36,7 @@ namespace Godot.Serialization
         public SerializationException(object instance, string message) : base($"Could not serialize object of {nameof(Type)} \"{instance.GetType().GetDisplayName()}\": {message}")
         {
         }
-
+        
         /// <summary>
         /// Initializes a new instance of <see cref="SerializationException"/>.
         /// </summary>
