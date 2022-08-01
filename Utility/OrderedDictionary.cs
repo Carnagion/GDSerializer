@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Godot.Serialization.Utility
+namespace Godot.Utility
 {
     /// <summary>
     /// Represents a generic collection of key-value pairs that can be accessed by the key or by the index, and preserves insertion order.

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Xml;
 
-using Godot.Serialization.Utility.Extensions;
+using Godot.Utility.Extensions;
 
 namespace Godot.Serialization.Specialized
 {

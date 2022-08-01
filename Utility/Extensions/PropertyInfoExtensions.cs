@@ -3,7 +3,9 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace Godot.Serialization.Utility.Extensions
+using Godot.Serialization;
+
+namespace Godot.Utility.Extensions
 {
     /// <summary>
     /// Contains extension methods for <see cref="PropertyInfo"/>.

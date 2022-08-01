@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Xml;
 
 using Godot.Serialization.Specialized;
-using Godot.Serialization.Utility;
-using Godot.Serialization.Utility.Extensions;
+using Godot.Utility;
+using Godot.Utility.Extensions;
 
 namespace Godot.Serialization
 {
@@ -69,6 +70,8 @@ namespace Godot.Serialization
         private static readonly VectorSerializer vector = new();
 
         private readonly Dictionary<string, object?>? referenceStorage;
+        
+        private static readonly Type[] forbiddenTypes = {typeof(Pointer), typeof(IntPtr),};
 
         /// <summary>
         /// Specialized <see cref="ISerializer"/>s for specific <see cref="Type"/>s. These serializers will be used by the <see cref="Serializer"/> when possible.
@@ -340,6 +343,14 @@ namespace Godot.Serialization
                                       select source.SelectSingleNode($"*[@Id='{referencedId}']")).FirstOrDefault() ?? throw new SerializationException(node, $"Referenced XML node with ID \"{referencedId}\" not found");
             instance = this.Deserialize(referencedNode);
             return true;
+        }
+
+        private bool CanSerialize(FieldInfo field)
+        {
+            return field.GetCustomAttribute<CompilerGeneratedAttribute>() is null
+                && !field.FieldType.IsPointer
+                && !Serializer.forbiddenTypes.Contains(field.FieldType)
+                && (field.GetCustomAttribute<SerializeAttribute>()?.Serializable ?? true);
         }
     }
 }

@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Xml;
 
-namespace Godot.Serialization.Utility.Extensions
+namespace Godot.Utility.Extensions
 {
     /// <summary>
     /// Contains extension methods for <see cref="XmlNode"/>.

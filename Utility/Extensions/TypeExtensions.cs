@@ -5,7 +5,7 @@ using System.Reflection;
 
 using Microsoft.CSharp;
 
-namespace Godot.Serialization.Utility.Extensions
+namespace Godot.Utility.Extensions
 {
     /// <summary>
     /// Contains extension methods for <see cref="Type"/>.

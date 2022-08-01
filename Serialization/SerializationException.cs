@@ -1,7 +1,7 @@
 using System;
 using System.Xml;
 
-using Godot.Serialization.Utility.Extensions;
+using Godot.Utility.Extensions;
 
 namespace Godot.Serialization
 {
