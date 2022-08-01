@@ -120,9 +120,7 @@ namespace Godot.Serialization.Specialized
                 }
                 
                 object dictionary = Activator.CreateInstance(dictionaryType, true) ?? throw new SerializationException(node, $"Unable to instantiate {dictionaryType.GetDisplayName()}");
-                foreach (XmlNode child in from XmlNode child in node.ChildNodes
-                                          where child.NodeType is XmlNodeType.Element
-                                          select child)
+                foreach (XmlNode child in node.ChildNodes.Cast<XmlNode>().Where(child => child.NodeType is XmlNodeType.Element))
                 {
                     if (child.Name != "item")
                     {

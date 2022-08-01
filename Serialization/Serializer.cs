@@ -127,9 +127,7 @@ namespace Godot.Serialization
                 }
                 
                 // Recursively serialize properties
-                foreach (PropertyInfo property in from property in type.GetAllMembers<PropertyInfo>(Serializer.instanceBindingFlags)
-                                                  where property.IsSerializable()
-                                                  select property)
+                foreach (PropertyInfo property in type.GetAllMembers<PropertyInfo>(Serializer.instanceBindingFlags).Where(property => property.IsSerializable()))
                 {
                     object? value = property.GetValue(instance);
                     if (value is null)
@@ -144,9 +142,7 @@ namespace Godot.Serialization
                 }
                 
                 // Recursively serialize fields
-                foreach (FieldInfo field in from field in type.GetAllMembers<FieldInfo>(Serializer.instanceBindingFlags)
-                                            where field.IsSerializable()
-                                            select field)
+                foreach (FieldInfo field in type.GetAllMembers<FieldInfo>(Serializer.instanceBindingFlags).Where(field => field.IsSerializable()))
                 {
                     object? value = field.GetValue(instance);
                     if (value is null)
@@ -161,9 +157,9 @@ namespace Godot.Serialization
                 }
                 
                 // Invoke all [AfterSerialization] methods
-                (from method in type.GetAllMembers<MethodInfo>()
-                 where method.GetCustomAttribute<AfterSerializationAttribute>() is not null
-                 select method).ForEach(method => method.Invoke(method.IsStatic ? null : instance, null));
+                type.GetAllMembers<MethodInfo>()
+                    .Where(method => method.GetCustomAttribute<AfterSerializationAttribute>() is not null)
+                    .ForEach(method => method.Invoke(method.IsStatic ? null : instance, null));
                 
                 return element;
             }
@@ -206,9 +202,7 @@ namespace Godot.Serialization
                 HashSet<MemberInfo> deserialized = new();
                 
                 object instance = Activator.CreateInstance(type, true) ?? throw new SerializationException(node, $"Unable to instantiate {type.GetDisplayName()}");
-                foreach (XmlNode child in from XmlNode child in node.ChildNodes
-                                          where child.NodeType is XmlNodeType.Element
-                                          select child)
+                foreach (XmlNode child in node.ChildNodes.Cast<XmlNode>().Where(child => child.NodeType is XmlNodeType.Element))
                 {
                     // Recursively deserialize property
                     PropertyInfo? property = type.FindProperty(child.Name, Serializer.instanceBindingFlags);
@@ -244,19 +238,19 @@ namespace Godot.Serialization
                 }
                 
                 // Ensure that properties/fields with [Serialize(true)] have been deserialized and those with [Serialize(false)] have not been deserialized
-                MemberInfo[] members = type.GetMembers(Serializer.instanceBindingFlags);
-                if (!deserialized.ContainsAll(from member in members 
-                                              let attribute = member.GetCustomAttribute<SerializeAttribute>() 
-                                              where attribute is not null && attribute.Serializable 
-                                              select member))
+                IEnumerable<MemberInfo> toDeserialize = type.GetMembers(Serializer.instanceBindingFlags)
+                    .Select(member => (member, member.GetCustomAttribute<SerializeAttribute>()))
+                    .Where(pair => pair.Item2 is not null && pair.Item2.Serializable)
+                    .Select(pair => pair.member);
+                if (!deserialized.ContainsAll(toDeserialize))
                 {
                     throw new SerializationException(node, $"One or more mandatory properties or fields of {type.GetDisplayName()} were not deserialized");
                 }
                 
                 // Invoke all [AfterDeserialization] methods
-                (from method in type.GetAllMembers<MethodInfo>()
-                 where method.GetCustomAttribute<AfterDeserializationAttribute>() is not null
-                 select method).ForEach(method => method.Invoke(method.IsStatic ? null : instance, null));
+                type.GetAllMembers<MethodInfo>()
+                    .Where(method => method.GetCustomAttribute<AfterDeserializationAttribute>() is not null)
+                    .ForEach(method => method.Invoke(method.IsStatic ? null : instance, null));
                 
                 // Add deserialized instance to reference storage if it has an ID
                 string? id = node.Attributes?["Id"]?.InnerText;
@@ -339,18 +333,11 @@ namespace Godot.Serialization
             {
                 return true;
             }
-            XmlNode referencedNode = (from source in this.ReferenceSources
-                                      select source.SelectSingleNode($"*[@Id='{referencedId}']")).FirstOrDefault() ?? throw new SerializationException(node, $"Referenced XML node with ID \"{referencedId}\" not found");
+            XmlNode referencedNode = this.ReferenceSources
+                .Select(source => source.SelectSingleNode($"*[@Id='{referencedId}']"))
+                .FirstOrDefault() ?? throw new SerializationException(node, $"Referenced XML node with ID \"{referencedId}\" not found");
             instance = this.Deserialize(referencedNode);
             return true;
-        }
-        
-        private static bool CanSerialize(FieldInfo field)
-        {
-            return field.GetCustomAttribute<CompilerGeneratedAttribute>() is null
-                && !field.FieldType.IsPointer
-                && !Serializer.forbiddenTypes.Contains(field.FieldType)
-                && (field.GetCustomAttribute<SerializeAttribute>()?.Serializable ?? true);
         }
     }
 }

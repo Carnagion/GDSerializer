@@ -51,8 +51,7 @@ namespace Godot.Utility
         {
             get
             {
-                return from pair in this.list
-                       select pair.Key;
+                return this.list.Select(pair => pair.Key);
             }
         }
         
@@ -63,8 +62,7 @@ namespace Godot.Utility
         {
             get
             {
-                return from pair in this.list
-                       select pair.Value;
+                return this.list.Select(pair => pair.Value);
             }
         }
         

@@ -123,9 +123,10 @@ namespace Godot.Serialization.Specialized
         /// <exception cref="SerializationException">Thrown if one of the child nodes in <paramref name="node"/> is not named "item".</exception>
         protected IEnumerable<object?> DeserializeItems(XmlNode node, Type itemType)
         {
-            return from child in node.ChildNodes.Cast<XmlNode>()
-                   where child.NodeType is XmlNodeType.Element
-                   select child.Name is "item" ? this.itemSerializer.Deserialize(child, child.GetTypeToDeserialize() ?? itemType) : throw new SerializationException(child, "Invalid XML node (all nodes in a collection must be named \"item\")");
+            return node.ChildNodes
+                .Cast<XmlNode>()
+                .Where(child => child.NodeType is XmlNodeType.Element)
+                .Select(child => child.Name is "item" ? this.itemSerializer.Deserialize(child, child.GetTypeToDeserialize() ?? itemType) : throw new SerializationException(child, "Invalid XML node (all nodes in a collection must be named \"item\")"));
         }
     }
 }

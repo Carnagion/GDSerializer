@@ -19,10 +19,11 @@ namespace Godot.Utility.Extensions
             string name = (node.Attributes?["Type"]?.InnerText ?? node.Name)
                 .Replace("&lt;", "<")
                 .Replace("&gt;", ">");
-            return (from assembly in AppDomain.CurrentDomain.GetAssemblies().Distinct()
-                    select assembly.GetType(name))
-                .NotNull()
-                .FirstOrDefault();
+            return AppDomain.CurrentDomain
+                .GetAssemblies()
+                .Distinct()
+                .Select(assembly => assembly.GetType(name))
+                .FirstOrDefault(type => type is not null);
         }
     }
 }
