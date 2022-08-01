@@ -20,10 +20,16 @@ namespace Godot.Serialization.Specialized
         /// <param name="itemSerializer">The serializer to use when (de)serializing the <see cref="ICollection{T}"/>'s items.</param>
         public CollectionSerializer(ISerializer itemSerializer)
         {
-            this.itemSerializer = itemSerializer;
+            this.ItemSerializer = itemSerializer;
         }
         
-        private readonly ISerializer itemSerializer;
+        /// <summary>
+        /// The serializer used when (de)serializing the <see cref="ICollection{T}"/>'s items.
+        /// </summary>
+        protected ISerializer ItemSerializer
+        {
+            get;
+        }
         
         /// <summary>
         /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
@@ -63,7 +69,7 @@ namespace Godot.Serialization.Specialized
         /// <param name="collectionType">The <see cref="Type"/> of <see cref="object"/> to deserialize the node as. It must implement <see cref="ICollection{T}"/>.</param>
         /// <returns>An <see cref="object"/> that represents the serialized data stored in <paramref name="node"/>.</returns>
         /// <exception cref="SerializationException">Thrown if <paramref name="node"/> could not be deserialized due to unexpected errors or invalid input.</exception>
-        public virtual object Deserialize(XmlNode node, Type? collectionType = null)
+        public virtual object? Deserialize(XmlNode node, Type? collectionType = null)
         {
             collectionType ??= node.GetTypeToDeserialize() ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
             if (!collectionType.DerivesFromGenericType(typeof(ICollection<>)))
@@ -92,7 +98,7 @@ namespace Godot.Serialization.Specialized
         }
         
         /// <summary>
-        /// Serializes all items in the collection <paramref name="instance"/>. It must implement <see cref="ICollection{T}"/>.
+        /// Serializes all items in the collection <paramref name="instance"/>. It must implement <see cref="IEnumerable"/>.
         /// </summary>
         /// <param name="instance">The collection to serialize.</param>
         /// <param name="itemType">The <see cref="Type"/> of items in <paramref name="instance"/>.</param>
@@ -107,7 +113,7 @@ namespace Godot.Serialization.Specialized
                 {
                     itemElement.SetAttribute("Type", item.GetType().FullName);
                 }
-                this.itemSerializer.Serialize(item, item.GetType()).ChildNodes
+                this.ItemSerializer.Serialize(item, item.GetType()).ChildNodes
                     .Cast<XmlNode>()
                     .ForEach(node => itemElement.AppendChild(context.ImportNode(node, true)));
                 yield return itemElement;
@@ -126,7 +132,7 @@ namespace Godot.Serialization.Specialized
             return node.ChildNodes
                 .Cast<XmlNode>()
                 .Where(child => child.NodeType is XmlNodeType.Element)
-                .Select(child => child.Name is "item" ? this.itemSerializer.Deserialize(child, child.GetTypeToDeserialize() ?? itemType) : throw new SerializationException(child, "Invalid XML node (all nodes in a collection must be named \"item\")"));
+                .Select(child => child.Name is "item" ? this.ItemSerializer.Deserialize(child, child.GetTypeToDeserialize() ?? itemType) : throw new SerializationException(child, "Invalid XML node (all nodes in a collection must be named \"item\")"));
         }
     }
 }
