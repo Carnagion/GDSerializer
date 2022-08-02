@@ -129,68 +129,44 @@ namespace Godot.Serialization
         public XmlNode Serialize(object instance, Type? type = null)
         {
             type ??= instance.GetType();
-            
-            // Use a more specialized serializer if possible
-            if (this.TryGetSpecialSerializerForType(type, out ISerializer? serializer))
-            {
-                return serializer.Serialize(instance, type);
-            }
+
+            XmlNode element;
             
             try
             {
-                XmlDocument context = new();
-                XmlElement element;
-                // Use the "Type" attribute if generic or nested type as ` and + are not allowed as XML node names
-                if (type.IsGenericType)
+                // Use a more specialized serializer if possible
+                if (this.TryGetSpecialSerializerForType(type, out ISerializer? serializer))
                 {
-                    element = context.CreateElement("Generic");
-                    element.SetAttribute("Type", type.FullName);
-                }
-                else if (type.IsNested)
-                {
-                    element = context.CreateElement("Nested");
-                    element.SetAttribute("Type", type.FullName);
+                    element = serializer.Serialize(instance, type);
                 }
                 else
                 {
-                    element = context.CreateElement(type.GetDisplayName());
-                }
+                    XmlDocument context = new();
                 
-                // Recursively serialize properties
-                foreach (PropertyInfo property in type.GetAllMembers<PropertyInfo>(Serializer.instanceBindingFlags).Where(Serializer.CanSerialize))
-                {
-                    object? value = property.GetValue(instance);
-                    if (value is null)
+                    // Use the "Type" attribute if generic or nested type as ` and + are not allowed as XML node names
+                    if (type.IsGenericType)
                     {
-                        continue;
+                        element = context.CreateElement("Generic");
+                        ((XmlElement)element).SetAttribute("Type", type.FullName);
                     }
-                    XmlNode node = context.CreateElement(property.Name);
-                    this.Serialize(value, property.PropertyType).ChildNodes
-                        .Cast<XmlNode>()
-                        .ForEach(child => node.AppendChild(context.ImportNode(child, true)));
-                    element.AppendChild(node);
-                }
-                
-                // Recursively serialize fields
-                foreach (FieldInfo field in type.GetAllMembers<FieldInfo>(Serializer.instanceBindingFlags).Where(Serializer.CanSerialize))
-                {
-                    object? value = field.GetValue(instance);
-                    if (value is null)
+                    else if (type.IsNested)
                     {
-                        continue;
+                        element = context.CreateElement("Nested");
+                        ((XmlElement)element).SetAttribute("Type", type.FullName);
                     }
-                    XmlNode node= context.CreateElement(field.Name);
-                    this.Serialize(value, field.FieldType).ChildNodes
-                        .Cast<XmlNode>()
-                        .ForEach(child => node.AppendChild(context.ImportNode(child, true)));
-                    element.AppendChild(node);
-                }
+                    else
+                    {
+                        element = context.CreateElement(type.GetDisplayName());
+                    }
                 
+                    this.SerializeMembers(instance, type).ForEach(pair => element.AppendChild(context.ImportNode(pair.Item1, true)));
+                }
+            
                 // Invoke all [AfterSerialization] methods
                 type.GetAllMembers<MethodInfo>()
                     .Where(method => method.GetCustomAttribute<AfterSerializationAttribute>() is not null)
                     .ForEach(method => method.Invoke(method.IsStatic ? null : instance, null));
-                
+            
                 return element;
             }
             catch (Exception exception) when (exception is not SerializationException)
@@ -214,67 +190,36 @@ namespace Godot.Serialization
             }
             
             type ??= node.GetTypeToDeserialize() ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
-            
+
             // Use a previously deserialized node if referenced
-            if (this.TryDeserializeReferencedNode(node, out object? referenced))
+            if (this.TryDeserializeReferencedNode(node, out object? instance))
             {
-                return referenced;
-            }
-            
-            // Use a more specialized deserializer if possible
-            if (this.TryGetSpecialSerializerForType(type, out ISerializer? serializer))
-            {
-                return serializer.Deserialize(node, type);
+                return instance;
             }
             
             try
             {
-                HashSet<MemberInfo> deserialized = new();
-                
-                object instance = Activator.CreateInstance(type, true) ?? throw new SerializationException(node, $"Unable to instantiate {type.GetDisplayName()}");
-                foreach (XmlNode child in node.ChildNodes.Cast<XmlNode>().Where(child => child.NodeType is XmlNodeType.Element))
+                // Use a more specialized deserializer if possible
+                if (this.TryGetSpecialSerializerForType(type, out ISerializer? serializer))
                 {
-                    // Recursively deserialize property
-                    PropertyInfo? property = type.FindProperty(child.Name, Serializer.instanceBindingFlags);
-                    if (property is not null)
-                    {
-                        if (!property.CanWrite)
-                        {
-                            throw new SerializationException(child, $"{type.GetDisplayName()}.{property.Name} has no 'set' accessor");
-                        }
-                        if (!property.GetCustomAttribute<SerializeAttribute>()?.Serializable ?? false)
-                        {
-                            throw new SerializationException(child, $"Attempted to deserialize non-deserializable property {property.Name} in {type.GetDisplayName()}");
-                        }
-                        property.SetValue(instance, this.Deserialize(child, property.PropertyType));
-                        deserialized.Add(property);
-                        continue;
-                    }
-                    
-                    // Recursively deserialize field
-                    FieldInfo? field = type.FindField(child.Name, Serializer.instanceBindingFlags);
-                    if (field is not null)
-                    {
-                        if (!field.GetCustomAttribute<SerializeAttribute>()?.Serializable ?? false)
-                        {
-                            throw new SerializationException(child, $"Attempted to deserialize non-deserializable field {field.Name} in {type.GetDisplayName()}");
-                        }
-                        field.SetValue(instance, this.Deserialize(child, field.FieldType));
-                        deserialized.Add(field);
-                        continue;
-                    }
-                    
-                    throw new SerializationException(child, $"{type.GetDisplayName()} has no field or property named \"{child.Name}\"");
+                    instance = serializer.Deserialize(node, type);
                 }
-                
-                // Ensure that properties/fields with [Serialize(true)] have been deserialized and those with [Serialize(false)] have not been deserialized
-                IEnumerable<MemberInfo> toDeserialize = type.GetMembers(Serializer.instanceBindingFlags)
-                    .Select(member => (member, member.GetCustomAttribute<SerializeAttribute>()))
-                    .Where(pair => pair.Item2 is not null && pair.Item2.Serializable)
-                    .Select(pair => pair.member);
-                if (!deserialized.ContainsAll(toDeserialize))
+                else
                 {
-                    throw new SerializationException(node, $"One or more mandatory properties or fields of {type.GetDisplayName()} were not deserialized");
+                    // Recursively deserialize and set members
+                    instance = Activator.CreateInstance(type, true) ?? throw new SerializationException(node, $"Unable to instantiate {type.GetDisplayName()}");
+                    foreach ((object? value, MemberInfo member) in this.DeserializeMembers(node, type))
+                    {
+                        switch (member)
+                        {
+                            case PropertyInfo property:
+                                property.SetValue(instance, value);
+                                break;
+                            case FieldInfo field:
+                                field.SetValue(instance, value);
+                                break;
+                        }
+                    }
                 }
                 
                 // Invoke all [AfterDeserialization] methods
@@ -317,6 +262,91 @@ namespace Godot.Serialization
         public T? Deserialize<T>(XmlNode node)
         {
             return (T?)this.Deserialize(node, typeof(T));
+        }
+        
+        internal IEnumerable<(XmlNode, MemberInfo)> SerializeMembers(object? instance, Type type)
+        {
+            XmlDocument context = new();
+            
+            // Recursively serialize properties
+            foreach (PropertyInfo property in type.GetAllMembers<PropertyInfo>(Serializer.instanceBindingFlags).Where(Serializer.CanSerialize))
+            {
+                object? value = property.GetValue(instance);
+                if (value is null)
+                {
+                    continue;
+                }
+                XmlNode node = context.CreateElement(property.Name);
+                this.Serialize(value, property.PropertyType).ChildNodes
+                    .Cast<XmlNode>()
+                    .ForEach(child => node.AppendChild(context.ImportNode(child, true)));
+                yield return (node, property);
+            }
+            
+            // Recursively serialize fields
+            foreach (FieldInfo field in type.GetAllMembers<FieldInfo>(Serializer.instanceBindingFlags).Where(Serializer.CanSerialize))
+            {
+                object? value = field.GetValue(instance);
+                if (value is null)
+                {
+                    continue;
+                }
+                XmlNode node= context.CreateElement(field.Name);
+                this.Serialize(value, field.FieldType).ChildNodes
+                    .Cast<XmlNode>()
+                    .ForEach(child => node.AppendChild(context.ImportNode(child, true)));
+                yield return (node, field);
+            }
+        }
+        
+        internal IEnumerable<(object?, MemberInfo)> DeserializeMembers(XmlNode node, Type type)
+        {
+            HashSet<(object?, MemberInfo)> deserialized = new();
+            foreach (XmlNode child in node.ChildNodes.Cast<XmlNode>().Where(child => child.NodeType is XmlNodeType.Element))
+            {
+                // Recursively deserialize property
+                PropertyInfo? property = type.FindProperty(child.Name, Serializer.instanceBindingFlags);
+                if (property is not null)
+                {
+                    if (!property.CanWrite)
+                    {
+                        throw new SerializationException(child, $"{type.GetDisplayName()}.{property.Name} has no 'set' accessor");
+                    }
+                    if (!property.GetCustomAttribute<SerializeAttribute>()?.Serializable ?? false)
+                    {
+                        throw new SerializationException(child, $"Attempted to deserialize non-deserializable property {property.Name} in {type.GetDisplayName()}");
+                    }
+                    deserialized.Add((this.Deserialize(child, property.PropertyType), property));
+                    continue;
+                }
+                
+                // Recursively deserialize field
+                FieldInfo? field = type.FindField(child.Name, Serializer.instanceBindingFlags);
+                if (field is not null)
+                {
+                    if (!field.GetCustomAttribute<SerializeAttribute>()?.Serializable ?? false)
+                    {
+                        throw new SerializationException(child, $"Attempted to deserialize non-deserializable field {field.Name} in {type.GetDisplayName()}");
+                    }
+                    deserialized.Add((this.Deserialize(child, field.FieldType), field));
+                    continue;
+                }
+                
+                throw new SerializationException(child, $"{type.GetDisplayName()} has no field or property named \"{child.Name}\"");
+            }
+            
+            // Ensure that properties/fields with [Serialize(true)] have been deserialized and those with [Serialize(false)] have not been deserialized
+            MemberInfo[] toDeserialize = type.GetMembers(Serializer.instanceBindingFlags)
+                .Select(member => (member, member.GetCustomAttribute<SerializeAttribute>()))
+                .Where(pair => pair.Item2 is not null && pair.Item2.Serializable)
+                .Select(pair => pair.member)
+                .ToArray();
+            if (toDeserialize.Any() && !deserialized.Select(pair => pair.Item1).ContainsAll(toDeserialize))
+            {
+                throw new SerializationException(node, $"One or more mandatory properties or fields of {type.GetDisplayName()} were not deserialized");
+            }
+            
+            return deserialized;
         }
         
         private bool TryGetSpecialSerializerForType(Type type, [NotNullWhen(true)] out ISerializer? serializer)
