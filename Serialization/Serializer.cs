@@ -264,7 +264,13 @@ namespace Godot.Serialization
             return (T?)this.Deserialize(node, typeof(T));
         }
         
-        internal IEnumerable<(XmlNode, MemberInfo)> SerializeMembers(object? instance, Type type)
+        /// <summary>
+        /// Serializes all data members (fields and properties) of <paramref name="instance"/>.
+        /// </summary>
+        /// <param name="instance">The <see cref="object"/> whose members are to be serialized.</param>
+        /// <param name="type">The <see cref="Type"/> to use when getting members of <paramref name="instance"/>, in case it is different from <paramref name="instance"/>'s <see cref="Type"/>.</param>
+        /// <returns>An <see cref="IEnumerable{T}"/> of the members of <paramref name="instance"/> and their serialized values.</returns>
+        public IEnumerable<(XmlNode, MemberInfo)> SerializeMembers(object? instance, Type type)
         {
             XmlDocument context = new();
             
@@ -299,7 +305,14 @@ namespace Godot.Serialization
             }
         }
         
-        internal IEnumerable<(object?, MemberInfo)> DeserializeMembers(XmlNode node, Type type)
+        /// <summary>
+        /// Deserializes <paramref name="node"/>'s children as the data members (fields and properties) of a <see cref="Type"/>.
+        /// </summary>
+        /// <param name="node">The <see cref="XmlNode"/> whose children are to be deserialized.</param>
+        /// <param name="type">The <see cref="Type"/> to use when deserializing members from <paramref name="node"/>, in case it is not apparent from <paramref name="node"/>'s attributes.</param>
+        /// <returns>An <see cref="IEnumerable{T}"/> of the members of the <see cref="Type"/> and their deserialized values.</returns>
+        /// <exception cref="SerializationException">Thrown if one or more mandatory members of the <see cref="Type"/> were not deserialized, or if there is another unexpected error during the process.</exception>
+        public IEnumerable<(object?, MemberInfo)> DeserializeMembers(XmlNode node, Type type)
         {
             HashSet<(object?, MemberInfo)> deserialized = new();
             foreach (XmlNode child in node.ChildNodes.Cast<XmlNode>().Where(child => child.NodeType is XmlNodeType.Element))

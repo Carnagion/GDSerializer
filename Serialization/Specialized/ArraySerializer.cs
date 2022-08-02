@@ -55,7 +55,7 @@ namespace Godot.Serialization.Specialized
         /// Deserializes <paramref name="node"/> into an <see cref="object"/>.
         /// </summary>
         /// <param name="node">The <see cref="XmlNode"/> to deserialize.</param>
-        /// <param name="arrayType">The <see cref="Type"/> of <see cref="object"/> to deserialize the node as. It must be an array type</param>
+        /// <param name="arrayType">The <see cref="Type"/> of <see cref="object"/> to deserialize the node as. It must be an array type.</param>
         /// <returns>An <see cref="object"/> that represents the serialized data stored in <paramref name="node"/>.</returns>
         /// <exception cref="SerializationException">Thrown if a <see cref="Type"/> could not be inferred from <paramref name="node"/> or was invalid, an instance of the <see cref="Type"/> could not be created, <paramref name="node"/> contained invalid properties/fields, or <paramref name="node"/> could not be deserialized due to unexpected errors or invalid data.</exception>
         public override object Deserialize(XmlNode node, Type? arrayType = null)
