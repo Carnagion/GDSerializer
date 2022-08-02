@@ -69,7 +69,7 @@ namespace Godot.Serialization.Specialized
         /// <param name="collectionType">The <see cref="Type"/> of <see cref="object"/> to deserialize the node as. It must implement <see cref="ICollection{T}"/>.</param>
         /// <returns>An <see cref="object"/> that represents the serialized data stored in <paramref name="node"/>.</returns>
         /// <exception cref="SerializationException">Thrown if <paramref name="node"/> could not be deserialized due to unexpected errors or invalid input.</exception>
-        public virtual object? Deserialize(XmlNode node, Type? collectionType = null)
+        public virtual object Deserialize(XmlNode node, Type? collectionType = null)
         {
             collectionType ??= node.GetTypeToDeserialize() ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
             if (!collectionType.DerivesFromGenericType(typeof(ICollection<>)))
