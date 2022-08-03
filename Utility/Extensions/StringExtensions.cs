@@ -29,14 +29,14 @@ namespace Godot.Utility.Extensions
             Group name = match.Groups["name"];
             Group parameters = match.Groups["parameters"];
             Group array = match.Groups["array"];
-
+            
             if (array.Success)
             {
                 int rank = array.Value.Count(character => character is ',') + 1;
                 string elementTypeName = StringExtensions.GetArrayElementTypeName(typeName);
                 return elementTypeName.Typeof()?.MakeArrayType(rank);
             }
-
+            
             if (parameters.Success)
             {
                 string[] genericParameterTypeNames = StringExtensions.GetGenericParameterTypeNames(parameters.Value).ToArray();
@@ -52,10 +52,10 @@ namespace Godot.Utility.Extensions
                 Type?[] genericParameterTypes = Array.ConvertAll(genericParameterTypeNames, StringExtensions.Typeof);
                 return genericParameterTypes.Any(genericParameterType => genericParameterType is null) ? null : unboundGenericType.MakeGenericType(genericParameterTypes);
             }
-
+            
             return StringExtensions.FindType(typeName);
         }
-
+        
         private static Type? FindType(string typeName)
         {
             return AppDomain.CurrentDomain.GetAssemblies()
