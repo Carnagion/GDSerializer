@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Xml;
 
 namespace Godot.Utility.Extensions
@@ -16,14 +15,10 @@ namespace Godot.Utility.Extensions
         /// <returns>The <see cref="Type"/> of the serialized data in <paramref name="node"/>, or <see langword="null"/> if no suitable <see cref="Type"/> was found.</returns>
         public static Type? GetTypeToDeserialize(this XmlNode node)
         {
-            string name = (node.Attributes?["Type"]?.InnerText ?? node.Name)
+            return (node.Attributes?["Type"]?.InnerText ?? node.Name)
                 .Replace("&lt;", "<")
-                .Replace("&gt;", ">");
-            return AppDomain.CurrentDomain
-                .GetAssemblies()
-                .Distinct()
-                .Select(assembly => assembly.GetType(name))
-                .FirstOrDefault(type => type is not null);
+                .Replace("&gt;", ">")
+                .Typeof();
         }
     }
 }
