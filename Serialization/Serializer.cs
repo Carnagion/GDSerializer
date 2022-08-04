@@ -244,17 +244,6 @@ namespace Godot.Serialization
         }
         
         /// <summary>
-        /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
-        /// </summary>
-        /// <param name="instance">The <see cref="object"/> to serialize.</param>
-        /// <typeparam name="T">The <see cref="Type"/> to serialize <paramref name="instance"/> as.</typeparam>
-        /// <returns>An <see cref="XmlNode"/> that represents <paramref name="instance"/> and the serializable data stored in it.</returns>
-        public XmlNode Serialize<T>(T instance) where T : notnull
-        {
-            return this.Serialize(instance, typeof(T));
-        }
-        
-        /// <summary>
         /// Deserializes <paramref name="node"/> into an <see cref="object"/>.
         /// </summary>
         /// <param name="node">The <see cref="XmlNode"/> to deserialize.</param>
