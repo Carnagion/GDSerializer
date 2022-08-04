@@ -57,33 +57,25 @@ namespace Godot.Serialization.Specialized
                 throw new SerializationException(node, $"No {nameof(type)} provided");
             }
             
-            if (!node.HasChildNodes)
+            if (node.ChildNodes.Count is not 1 || node.ChildNodes[0] is not XmlText text)
             {
                 throw new SerializationException(node, "Node contains no textual data");
             }
             
-            try
+            Match match = VectorSerializer.vectorRegexes[type].Match(text.InnerText.Trim());
+            if (!match.Success)
             {
-                string text = node.ChildNodes[0].InnerText.Trim();
-                Match match = VectorSerializer.vectorRegexes[type].Match(text);
-                if (!match.Success)
-                {
-                    throw new SerializationException(node, "Invalid vector format");
-                }
-                
-                float x = Single.Parse(match.Groups["x"].Value);
-                float y = Single.Parse(match.Groups["y"].Value);
-                if (type == typeof(Vector2))
-                {
-                    return new Vector2(x, y);
-                }
-                float z = Single.Parse(match.Groups["z"].Value);
-                return new Vector3(x, y, z);
+                throw new SerializationException(node, "Invalid vector format");
             }
-            catch (Exception exception) when (exception is not SerializationException)
+            
+            float x = Single.Parse(match.Groups["x"].Value);
+            float y = Single.Parse(match.Groups["y"].Value);
+            if (type == typeof(Vector2))
             {
-                throw new SerializationException(node, exception);
+                return new Vector2(x, y);
             }
+            float z = Single.Parse(match.Groups["z"].Value);
+            return new Vector3(x, y, z);
         }
     }
 }

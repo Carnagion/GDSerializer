@@ -44,7 +44,7 @@ namespace Godot.Serialization.Specialized
             {
                 throw new SerializationException(node, $"\"{type.GetDisplayName()}\" cannot be (de)serialized by {typeof(TypeSerializer).GetDisplayName()}");
             }
-            return node.ChildNodes[0] is XmlText text
+            return node.ChildNodes.Count is 1 && node.ChildNodes[0] is XmlText text
                 ? text.InnerText.Typeof()
                 : throw new SerializationException(node, "Node contains no textual data");
         }

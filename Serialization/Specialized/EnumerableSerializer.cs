@@ -35,20 +35,13 @@ namespace Godot.Serialization.Specialized
                 throw new SerializationException(instance, $"\"{enumerableType.GetDisplayName()}\" cannot be (de)serialized by {typeof(EnumerableSerializer).GetDisplayName()}");
             }
             
-            try
-            {
-                Type itemType = enumerableType.GenericTypeArguments[0];
-                
-                XmlDocument context = new();
-                XmlElement enumerableElement = context.CreateElement("Enumerable");
-                enumerableElement.SetAttribute("Type", enumerableType.GetDisplayName().XMLEscape());
-                this.SerializeItems(instance, itemType).ForEach(node => enumerableElement.AppendChild(context.ImportNode(node, true)));
-                return enumerableElement;
-            }
-            catch (Exception exception) when (exception is not SerializationException)
-            {
-                throw new SerializationException(instance, exception);
-            }
+            Type itemType = enumerableType.GenericTypeArguments[0];
+            
+            XmlDocument context = new();
+            XmlElement enumerableElement = context.CreateElement("Enumerable");
+            enumerableElement.SetAttribute("Type", enumerableType.GetDisplayName().XMLEscape());
+            this.SerializeItems(instance, itemType).ForEach(node => enumerableElement.AppendChild(context.ImportNode(node, true)));
+            return enumerableElement;
         }
         
         /// <summary>
@@ -66,17 +59,10 @@ namespace Godot.Serialization.Specialized
                 throw new SerializationException(node, $"\"{enumerableType.GetDisplayName()}\" cannot be (de)serialized by {typeof(EnumerableSerializer).GetDisplayName()}");
             }
             
-            try
-            {
-                Type itemType = enumerableType.GenericTypeArguments[0];
-                Type listType = typeof(List<>).MakeGenericType(itemType);
-                object enumerable = base.Deserialize(node, listType);
-                return typeof(IEnumerableExtensions).GetMethod("Copy")!.MakeGenericMethod(itemType).Invoke(null, new[] {enumerable,})!;
-            }
-            catch (Exception exception) when (exception is not SerializationException)
-            {
-                throw new SerializationException(node, exception);
-            }
+            Type itemType = enumerableType.GenericTypeArguments[0];
+            Type listType = typeof(List<>).MakeGenericType(itemType);
+            object enumerable = base.Deserialize(node, listType);
+            return typeof(IEnumerableExtensions).GetMethod("Copy")!.MakeGenericMethod(itemType).Invoke(null, new[] {enumerable,})!;
         }
     }
 }

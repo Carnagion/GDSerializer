@@ -35,20 +35,13 @@ namespace Godot.Serialization.Specialized
                 throw new SerializationException(instance, $"\"{arrayType.GetDisplayName()}\" cannot be serialized by {typeof(ArraySerializer).GetDisplayName()}");
             }
             
-            try
-            {
-                Type itemType = arrayType.GetElementType()!;
-                
-                XmlDocument context = new();
-                XmlElement arrayElement = context.CreateElement("Array");
-                arrayElement.SetAttribute("Type", $"{itemType.GetDisplayName().XMLEscape()}[]");
-                this.SerializeItems(instance, itemType).ForEach(node => arrayElement.AppendChild(context.ImportNode(node, true)));
-                return arrayElement;
-            }
-            catch (Exception exception) when (exception is not SerializationException)
-            {
-                throw new SerializationException(instance, exception);
-            }
+            Type itemType = arrayType.GetElementType()!;
+            
+            XmlDocument context = new();
+            XmlElement arrayElement = context.CreateElement("Array");
+            arrayElement.SetAttribute("Type", $"{itemType.GetDisplayName().XMLEscape()}[]");
+            this.SerializeItems(instance, itemType).ForEach(node => arrayElement.AppendChild(context.ImportNode(node, true)));
+            return arrayElement;
         }
         
         /// <summary>
@@ -66,23 +59,16 @@ namespace Godot.Serialization.Specialized
                 throw new SerializationException(node, $"\"{arrayType.GetDisplayName()}\" cannot be deserialized by {typeof(ArraySerializer).GetDisplayName()}");
             }
             
-            try
+            Type itemType = arrayType.GetElementType()!;
+            
+            IList array = Array.CreateInstance(itemType, node.ChildNodes.Count);
+            int index = 0;
+            foreach (object? item in this.DeserializeItems(node, itemType))
             {
-                Type itemType = arrayType.GetElementType()!;
-                
-                IList array = Array.CreateInstance(itemType, node.ChildNodes.Count);
-                int index = 0;
-                foreach (object? item in this.DeserializeItems(node, itemType))
-                {
-                    array[index] = item;
-                    index += 1;
-                }
-                return array;
+                array[index] = item;
+                index += 1;
             }
-            catch (Exception exception) when (exception is not SerializationException)
-            {
-                throw new SerializationException(node, exception);
-            }
+            return array;
         }
     }
 }

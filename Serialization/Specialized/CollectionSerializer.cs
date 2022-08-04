@@ -46,20 +46,13 @@ namespace Godot.Serialization.Specialized
                 throw new SerializationException(instance, $"\"{collectionType.GetDisplayName()}\" cannot be (de)serialized by {typeof(CollectionSerializer).GetDisplayName()}");
             }
             
-            try
-            {
-                Type itemType = collectionType.GenericTypeArguments[0];
-                
-                XmlDocument context = new();
-                XmlElement collectionElement = context.CreateElement("Collection");
-                collectionElement.SetAttribute("Type", collectionType.GetDisplayName().XMLEscape());
-                this.SerializeItems(instance, itemType).ForEach(node => collectionElement.AppendChild(context.ImportNode(node, true)));
-                return collectionElement;
-            }
-            catch (Exception exception) when (exception is not SerializationException)
-            {
-                throw new SerializationException(instance, exception);
-            }
+            Type itemType = collectionType.GenericTypeArguments[0];
+            
+            XmlDocument context = new();
+            XmlElement collectionElement = context.CreateElement("Collection");
+            collectionElement.SetAttribute("Type", collectionType.GetDisplayName().XMLEscape());
+            this.SerializeItems(instance, itemType).ForEach(node => collectionElement.AppendChild(context.ImportNode(node, true)));
+            return collectionElement;
         }
         
         /// <summary>
@@ -77,24 +70,17 @@ namespace Godot.Serialization.Specialized
                 throw new SerializationException(node, $"\"{collectionType.GetDisplayName()}\" cannot be (de)serialized by {typeof(CollectionSerializer).GetDisplayName()}");
             }
             
-            try
+            MethodInfo add = collectionType.GetMethod("Add")!;
+            Type itemType = collectionType.GenericTypeArguments[0];
+            
+            if (collectionType.IsExactlyGenericType(typeof(ICollection<>)))
             {
-                MethodInfo add = collectionType.GetMethod("Add")!;
-                Type itemType = collectionType.GenericTypeArguments[0];
-                
-                if (collectionType.IsExactlyGenericType(typeof(ICollection<>)))
-                {
-                    collectionType = typeof(List<>).MakeGenericType(itemType);
-                }
-                
-                object collection = Activator.CreateInstance(collectionType, true) ?? throw new SerializationException(node, $"Unable to instantiate {collectionType.GetDisplayName()}");
-                this.DeserializeItems(node, itemType).ForEach(item => add.Invoke(collection, new[] {item,}));
-                return collection;
+                collectionType = typeof(List<>).MakeGenericType(itemType);
             }
-            catch (Exception exception) when (exception is not SerializationException)
-            {
-                throw new SerializationException(node, exception);
-            }
+            
+            object collection = Activator.CreateInstance(collectionType, true) ?? throw new SerializationException(node, $"Unable to instantiate {collectionType.GetDisplayName()}");
+            this.DeserializeItems(node, itemType).ForEach(item => add.Invoke(collection, new[] {item,}));
+            return collection;
         }
         
         /// <summary>
