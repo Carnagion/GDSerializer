@@ -147,12 +147,12 @@ namespace Godot.Serialization
                     if (type.IsGenericType)
                     {
                         element = context.CreateElement("Generic");
-                        ((XmlElement)element).SetAttribute("Type", type.FullName);
+                        ((XmlElement)element).SetAttribute("Type", type.GetDisplayName().XMLEscape());
                     }
                     else if (type.IsNested)
                     {
                         element = context.CreateElement("Nested");
-                        ((XmlElement)element).SetAttribute("Type", type.FullName);
+                        ((XmlElement)element).SetAttribute("Type", type.GetDisplayName().XMLEscape());
                     }
                     else
                     {

@@ -16,8 +16,7 @@ namespace Godot.Utility.Extensions
         public static Type? GetTypeToDeserialize(this XmlNode node)
         {
             return (node.Attributes?["Type"]?.InnerText ?? node.Name)
-                .Replace("&lt;", "<")
-                .Replace("&gt;", ">")
+                .XMLUnescape()
                 .Typeof();
         }
     }

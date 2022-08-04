@@ -52,7 +52,7 @@ namespace Godot.Serialization.Specialized
                 
                 XmlDocument context = new();
                 XmlElement dictionaryElement = context.CreateElement("Dictionary");
-                dictionaryElement.SetAttribute("Type", dictionaryType.FullName);
+                dictionaryElement.SetAttribute("Type", dictionaryType.GetDisplayName().XMLEscape());
                 
                 foreach (object item in (IEnumerable)instance)
                 {
@@ -62,7 +62,7 @@ namespace Godot.Serialization.Specialized
                     XmlElement keyElement = context.CreateElement("key");
                     if (key.GetType() != keyType)
                     {
-                        keyElement.SetAttribute("Type", key.GetType().FullName);
+                        keyElement.SetAttribute("Type", key.GetType().GetDisplayName().XMLEscape());
                     }
                     this.itemSerializer.Serialize(key, key.GetType()).ChildNodes
                         .Cast<XmlNode>()
@@ -71,7 +71,7 @@ namespace Godot.Serialization.Specialized
                     XmlElement valueElement = context.CreateElement("value");
                     if (value.GetType() != valueType)
                     {
-                        valueElement.SetAttribute("Type", value.GetType().FullName);
+                        valueElement.SetAttribute("Type", value.GetType().GetDisplayName().XMLEscape());
                     }
                     this.itemSerializer.Serialize(value, value.GetType()).ChildNodes
                         .Cast<XmlNode>()

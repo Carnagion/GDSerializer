@@ -41,7 +41,7 @@ namespace Godot.Serialization.Specialized
                 
                 XmlDocument context = new();
                 XmlElement enumerableElement = context.CreateElement("Enumerable");
-                enumerableElement.SetAttribute("Type", enumerableType.FullName);
+                enumerableElement.SetAttribute("Type", enumerableType.GetDisplayName().XMLEscape());
                 this.SerializeItems(instance, itemType).ForEach(node => enumerableElement.AppendChild(context.ImportNode(node, true)));
                 return enumerableElement;
             }

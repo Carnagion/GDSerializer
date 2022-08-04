@@ -42,12 +42,12 @@ namespace Godot.Serialization.Specialized
             if (nodeType.IsGenericType)
             {
                 element = context.CreateElement("Generic");
-                element.SetAttribute("Type", nodeType.FullName);
+                element.SetAttribute("Type", nodeType.GetDisplayName().XMLEscape());
             }
             else if (nodeType.IsNested)
             {
                 element = context.CreateElement("Nested");
-                element.SetAttribute("Type", nodeType.FullName);
+                element.SetAttribute("Type", nodeType.GetDisplayName().XMLEscape());
             }
             else
             {

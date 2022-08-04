@@ -52,7 +52,7 @@ namespace Godot.Serialization.Specialized
                 
                 XmlDocument context = new();
                 XmlElement collectionElement = context.CreateElement("Collection");
-                collectionElement.SetAttribute("Type", collectionType.FullName);
+                collectionElement.SetAttribute("Type", collectionType.GetDisplayName().XMLEscape());
                 this.SerializeItems(instance, itemType).ForEach(node => collectionElement.AppendChild(context.ImportNode(node, true)));
                 return collectionElement;
             }
@@ -111,7 +111,7 @@ namespace Godot.Serialization.Specialized
                 XmlElement itemElement = context.CreateElement("item");
                 if (item.GetType() != itemType)
                 {
-                    itemElement.SetAttribute("Type", item.GetType().FullName);
+                    itemElement.SetAttribute("Type", item.GetType().GetDisplayName().XMLEscape());
                 }
                 this.ItemSerializer.Serialize(item, item.GetType()).ChildNodes
                     .Cast<XmlNode>()
