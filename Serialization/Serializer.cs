@@ -47,6 +47,7 @@ namespace Godot.Serialization
                 {typeof(Vector2), Serializer.vector},
                 {typeof(Vector3), Serializer.vector},
                 {typeof(Enum), new EnumSerializer()},
+                {typeof(Type), new TypeSerializer()},
             };
             this.ReferenceSources = referenceSources?.ToHashSet();
             this.referenceStorage = this.ReferenceSources is null ? null : new();
