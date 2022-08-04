@@ -15,8 +15,10 @@ namespace Godot.Utility.Extensions
         /// <returns>The <see cref="Type"/> of the serialized data in <paramref name="node"/>, or <see langword="null"/> if no suitable <see cref="Type"/> was found.</returns>
         public static Type? GetTypeToDeserialize(this XmlNode node)
         {
+            // Use Replace() instead of XMLUnescape() which throws an exception for some reason
             return (node.Attributes?["Type"]?.InnerText ?? node.Name)
-                .XMLUnescape()
+                .Replace("&lt;", "<")
+                .Replace("&gt;", ">")
                 .Typeof();
         }
     }
