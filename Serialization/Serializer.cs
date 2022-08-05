@@ -23,7 +23,7 @@ namespace Godot.Serialization
         /// <param name="referenceSources">An <see cref="IEnumerable{T}"/> of <see cref="XmlNode"/>s to use when deserializing <see cref="XmlNode"/>s that refer other <see cref="XmlNode"/>s through an ID.</param>
         public Serializer(IEnumerable<XmlNode>? referenceSources = null)
         {
-            this.Specialized = new(19)
+            this.Specialized = new(24)
             {
                 {typeof(string), Serializer.simple},
                 {typeof(char), Serializer.simple},
