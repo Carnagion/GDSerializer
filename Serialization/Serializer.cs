@@ -48,6 +48,7 @@ namespace Godot.Serialization
                 {typeof(Vector3), Serializer.vector},
                 {typeof(Enum), new EnumSerializer()},
                 {typeof(Type), new TypeSerializer()},
+                {typeof(XmlNode), new XmlNodeSerializer()},
             };
             this.ReferenceSources = referenceSources?.ToHashSet();
             this.referenceStorage = this.ReferenceSources is null ? null : new();
@@ -67,13 +68,13 @@ namespace Godot.Serialization
         
         private const BindingFlags instanceBindingFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
         
+        private static readonly Type[] forbiddenTypes = {typeof(Pointer), typeof(IntPtr),};
+        
         private static readonly SimpleSerializer simple = new();
         
         private static readonly VectorSerializer vector = new();
         
         private readonly Dictionary<string, object?>? referenceStorage;
-        
-        private static readonly Type[] forbiddenTypes = {typeof(Pointer), typeof(IntPtr),};
         
         /// <summary>
         /// Specialized <see cref="ISerializer"/>s for specific <see cref="Type"/>s. These serializers will be used by the <see cref="Serializer"/> when possible.
