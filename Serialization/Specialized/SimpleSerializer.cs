@@ -43,12 +43,12 @@ namespace Godot.Serialization.Specialized
         /// <exception cref="SerializationException">Thrown if <paramref name="type"/> is not a simple type.</exception>
         public object Deserialize(XmlNode node, Type? type = null)
         {
-            if (!node.HasChildNodes)
+            if (node.ChildNodes.Count is not 1 || node.ChildNodes[0] is not XmlText textNode)
             {
-                throw new SerializationException(node, "Node contains no textual data");
+                throw new SerializationException(node, "Node contains invalid number or type of child nodes");
             }
             
-            string text = node.ChildNodes[0].InnerText;
+            string text = textNode.InnerText;
             
             if (type == typeof(string))
             {

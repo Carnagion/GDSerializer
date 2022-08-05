@@ -19,10 +19,9 @@ namespace Godot.Serialization.Specialized
         /// <exception cref="SerializationException">Thrown if <paramref name="instance"/> could not be serialized due to unexpected errors or invalid input.</exception>
         public XmlNode Serialize(object instance, Type? type = null)
         {
-            type ??= instance.GetType();
-            if ((type != typeof(Type)) || instance is not Type typeInstance)
+            if (instance is not Type typeInstance)
             {
-                throw new SerializationException(instance, $"\"{type.GetDisplayName()}\" cannot be (de)serialized by {typeof(TypeSerializer).GetDisplayName()}");
+                throw new SerializationException(instance, $"\"{instance.GetType().GetDisplayName()}\" cannot be (de)serialized by {typeof(TypeSerializer).GetDisplayName()}");
             }
             XmlDocument context = new();
             XmlElement element = context.CreateElement(typeof(Type).GetDisplayName());
@@ -46,7 +45,7 @@ namespace Godot.Serialization.Specialized
             }
             return node.ChildNodes.Count is 1 && node.ChildNodes[0] is XmlText text
                 ? text.InnerText.Typeof()
-                : throw new SerializationException(node, "Node contains no textual data");
+                : throw new SerializationException(node, "Node contains invalid number or type of child nodes");
         }
     }
 }

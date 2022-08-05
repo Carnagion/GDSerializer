@@ -59,7 +59,7 @@ namespace Godot.Serialization.Specialized
             
             if (node.ChildNodes.Count is not 1 || node.ChildNodes[0] is not XmlText text)
             {
-                throw new SerializationException(node, "Node contains no textual data");
+                throw new SerializationException(node, "Node contains invalid number or type of child nodes");
             }
             
             Match match = VectorSerializer.vectorRegexes[type].Match(text.InnerText.Trim());

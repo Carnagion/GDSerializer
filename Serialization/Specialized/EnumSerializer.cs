@@ -46,7 +46,7 @@ namespace Godot.Serialization.Specialized
             }
             return node.ChildNodes.Count is 1 && node.ChildNodes[0] is XmlText text
                 ? Enum.Parse(enumType, text.InnerText, false)
-                : throw new SerializationException(node, "Node contains no textual data");
+                : throw new SerializationException(node, "Node contains invalid number or type of child nodes");
         }
     }
 }
