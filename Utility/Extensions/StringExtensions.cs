@@ -41,9 +41,7 @@ namespace Godot.Utility.Extensions
             {
                 string[] genericParameterTypeNames = StringExtensions.GetGenericParameterTypeNames(parameters.Value).ToArray();
                 int length = genericParameterTypeNames.Length - 1;
-                string commas = Enumerable.Repeat(", ", length)
-                    .Aggregate(new StringBuilder(), (builder, comma) => builder.Append(comma))
-                    .ToString();
+                string commas = Enumerable.Repeat(", ", length).Join();
                 Type? unboundGenericType = StringExtensions.FindType($"{name.Value}<{commas}>");
                 if (unboundGenericType is null || genericParameterTypeNames.All(String.IsNullOrWhiteSpace))
                 {
