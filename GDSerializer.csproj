@@ -8,7 +8,7 @@
         <!-- Workaround as Godot does not know how to properly load NuGet packages -->
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <PackageVersion>2.0.1</PackageVersion>
+        <PackageVersion>2.0.2</PackageVersion>
         <Title>GDSerializer</Title>
         <Authors>Carnagion</Authors>
         <Description>An XML (de)serialization framework for Godot's C# API.</Description>
