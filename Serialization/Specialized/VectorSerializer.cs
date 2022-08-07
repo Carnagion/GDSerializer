@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Xml;
 
-using Godot.Serialization.Utility.Extensions;
+using Godot.Utility.Extensions;
 
 namespace Godot.Serialization.Specialized
 {
@@ -17,7 +17,7 @@ namespace Godot.Serialization.Specialized
             {typeof(Vector2), new(@"\(\s*(?<x>[+-]?\d+(?:\.\d+)?)\s*,\s*(?<y>[+-]?\d+(?:\.\d+)?)\s*\)")},
             {typeof(Vector3), new(@"\(\s*(?<x>[+-]?\d+(?:\.\d+)?)\s*,\s*(?<y>[+-]?\d+(?:\.\d+)?)\s*,\s*(?<z>[+-]?\d+(?:\.\d+)?)\s*\)")},
         };
-
+        
         /// <summary>
         /// Serializes <paramref name="instance"/> into an <see cref="XmlNode"/>.
         /// </summary>
@@ -31,18 +31,18 @@ namespace Godot.Serialization.Specialized
             switch (instance)
             {
                 case Vector2 vector2:
-                    XmlElement element2 = context.CreateElement(typeof(Vector2).FullName);
+                    XmlElement element2 = context.CreateElement(typeof(Vector2).GetDisplayName());
                     element2.AppendChild(context.CreateTextNode($"({vector2.x}, {vector2.y})"));
                     return element2;
                 case Vector3 vector3:
-                    XmlElement element3 = context.CreateElement(typeof(Vector3).FullName);
+                    XmlElement element3 = context.CreateElement(typeof(Vector3).GetDisplayName());
                     element3.AppendChild(context.CreateTextNode($"({vector3.x}, {vector3.y}, {vector3.z})"));
                     return element3;
                 default:
                     throw new SerializationException(instance, $"\"{instance.GetType().GetDisplayName()}\" cannot be serialized by {typeof(VectorSerializer).GetDisplayName()}");
             }
         }
-
+        
         /// <summary>
         /// Deserializes <paramref name="node"/> into an <see cref="object"/>.
         /// </summary>
@@ -57,33 +57,25 @@ namespace Godot.Serialization.Specialized
                 throw new SerializationException(node, $"No {nameof(type)} provided");
             }
             
-            if (!node.HasChildNodes)
+            if (node.ChildNodes.Count is not 1 || node.ChildNodes[0] is not XmlText text)
             {
-                throw new SerializationException(node, "Node contains no textual data");
+                throw new SerializationException(node, "Node contains invalid number or type of child nodes");
             }
-
-            try
+            
+            Match match = VectorSerializer.vectorRegexes[type].Match(text.InnerText.Trim());
+            if (!match.Success)
             {
-                string text = node.ChildNodes[0].InnerText.Trim();
-                Match match = VectorSerializer.vectorRegexes[type].Match(text);
-                if (!match.Success)
-                {
-                    throw new SerializationException(node, "Invalid vector format");
-                }
-
-                float x = Single.Parse(match.Groups["x"].Value);
-                float y = Single.Parse(match.Groups["y"].Value);
-                if (type == typeof(Vector2))
-                {
-                    return new Vector2(x, y);
-                }
-                float z = Single.Parse(match.Groups["z"].Value);
-                return new Vector3(x, y, z);
+                throw new SerializationException(node, "Invalid vector format");
             }
-            catch (Exception exception) when (exception is not SerializationException)
+            
+            float x = Single.Parse(match.Groups["x"].Value);
+            float y = Single.Parse(match.Groups["y"].Value);
+            if (type == typeof(Vector2))
             {
-                throw new SerializationException(node, exception);
+                return new Vector2(x, y);
             }
+            float z = Single.Parse(match.Groups["z"].Value);
+            return new Vector3(x, y, z);
         }
     }
 }

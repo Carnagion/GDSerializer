@@ -16,7 +16,7 @@ namespace Godot.Serialization
         {
             this.Serializable = serializable;
         }
-
+        
         /// <summary>
         /// Indicates whether the field or property annotated with the <see cref="SerializeAttribute"/> must always be (de)serialized (<see langword="true"/>) or never be (de)serialized (<see langword="false"/>).
         /// </summary>

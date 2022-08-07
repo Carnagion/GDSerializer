@@ -3,7 +3,7 @@ using System.Collections;
 using System.Linq;
 using System.Xml;
 
-using Godot.Serialization.Utility.Extensions;
+using Godot.Utility.Extensions;
 
 namespace Godot.Serialization.Specialized
 {
@@ -34,28 +34,21 @@ namespace Godot.Serialization.Specialized
             {
                 throw new SerializationException(instance, $"\"{arrayType.GetDisplayName()}\" cannot be serialized by {typeof(ArraySerializer).GetDisplayName()}");
             }
-
-            try
-            {
-                Type itemType = arrayType.GetElementType()!;
-
-                XmlDocument context = new();
-                XmlElement arrayElement = context.CreateElement("Array");
-                arrayElement.SetAttribute("Type", $"{itemType.FullName}[]");
-                this.SerializeItems(instance, itemType).ForEach(node => arrayElement.AppendChild(context.ImportNode(node, true)));
-                return arrayElement;
-            }
-            catch (Exception exception) when (exception is not SerializationException)
-            {
-                throw new SerializationException(instance, exception);
-            }
+            
+            Type itemType = arrayType.GetElementType()!;
+            
+            XmlDocument context = new();
+            XmlElement arrayElement = context.CreateElement("Array");
+            arrayElement.SetAttribute("Type", $"{itemType.GetDisplayName().XMLEscape()}[]");
+            this.SerializeItems(instance, itemType).ForEach(node => arrayElement.AppendChild(context.ImportNode(node, true)));
+            return arrayElement;
         }
         
         /// <summary>
         /// Deserializes <paramref name="node"/> into an <see cref="object"/>.
         /// </summary>
         /// <param name="node">The <see cref="XmlNode"/> to deserialize.</param>
-        /// <param name="arrayType">The <see cref="Type"/> of <see cref="object"/> to deserialize the node as. It must be an array type</param>
+        /// <param name="arrayType">The <see cref="Type"/> of <see cref="object"/> to deserialize the node as. It must be an array type.</param>
         /// <returns>An <see cref="object"/> that represents the serialized data stored in <paramref name="node"/>.</returns>
         /// <exception cref="SerializationException">Thrown if a <see cref="Type"/> could not be inferred from <paramref name="node"/> or was invalid, an instance of the <see cref="Type"/> could not be created, <paramref name="node"/> contained invalid properties/fields, or <paramref name="node"/> could not be deserialized due to unexpected errors or invalid data.</exception>
         public override object Deserialize(XmlNode node, Type? arrayType = null)
@@ -65,24 +58,17 @@ namespace Godot.Serialization.Specialized
             {
                 throw new SerializationException(node, $"\"{arrayType.GetDisplayName()}\" cannot be deserialized by {typeof(ArraySerializer).GetDisplayName()}");
             }
-
-            try
+            
+            Type itemType = arrayType.GetElementType()!;
+            
+            IList array = Array.CreateInstance(itemType, node.ChildNodes.Count);
+            int index = 0;
+            foreach (object? item in this.DeserializeItems(node, itemType))
             {
-                Type itemType = arrayType.GetElementType()!;
-
-                IList array = Array.CreateInstance(itemType, node.ChildNodes.Count);
-                int index = 0;
-                foreach (object? item in this.DeserializeItems(node, itemType))
-                {
-                    array[index] = item;
-                    index += 1;
-                }
-                return array;
+                array[index] = item;
+                index += 1;
             }
-            catch (Exception exception) when (exception is not SerializationException)
-            {
-                throw new SerializationException(node, exception);
-            }
+            return array;
         }
     }
 }
