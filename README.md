@@ -9,7 +9,7 @@ It supports (de)serialization of almost any C# type including collections and ma
 **GDSerializer** is available as a [NuGet package](https://www.nuget.org/packages/GDSerializer/), which can be installed either through an IDE or by manually including the following lines in a Godot project's `.csproj` file:
 ```xml
 <ItemGroup>
-    <PackageReference Include="GDSerializer" Version="2.0.2"/>
+    <PackageReference Include="GDSerializer" Version="2.0.1"/>
 </ItemGroup>
 ```
 Its dependencies may need to be installed as well, in a similar fashion.
