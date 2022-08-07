@@ -131,7 +131,7 @@ namespace Godot.Serialization
         public XmlNode Serialize(object instance, Type? type = null)
         {
             type ??= instance.GetType();
-
+            
             XmlNode element;
             
             try
@@ -163,12 +163,12 @@ namespace Godot.Serialization
                 
                     this.SerializeMembers(instance, type).ForEach(pair => element.AppendChild(context.ImportNode(pair.Item1, true)));
                 }
-            
+                
                 // Invoke all [AfterSerialization] methods
                 type.GetAllMembers<MethodInfo>()
                     .Where(method => method.GetCustomAttribute<AfterSerializationAttribute>() is not null)
                     .ForEach(method => method.Invoke(method.IsStatic ? null : instance, null));
-            
+                
                 return element;
             }
             catch (Exception exception) when (exception is not SerializationException)
@@ -192,7 +192,7 @@ namespace Godot.Serialization
             }
             
             type ??= node.GetTypeToDeserialize() ?? throw new SerializationException(node, $"No {nameof(Type)} found to instantiate");
-
+            
             // Use a previously deserialized node if referenced
             if (this.TryDeserializeReferencedNode(node, out object? instance))
             {
