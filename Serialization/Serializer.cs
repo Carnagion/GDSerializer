@@ -345,7 +345,7 @@ namespace Godot.Serialization
                 .Where(pair => pair.Item2 is not null && pair.Item2.Serializable)
                 .Select(pair => pair.member)
                 .ToArray();
-            if (toDeserialize.Any() && !deserialized.Select(pair => pair.Item1).ContainsAll(toDeserialize))
+            if (toDeserialize.Any() && !deserialized.Select(pair => pair.Item2).ContainsAll(toDeserialize))
             {
                 throw new SerializationException(node, $"One or more mandatory properties or fields of {type.GetDisplayName()} were not deserialized");
             }
