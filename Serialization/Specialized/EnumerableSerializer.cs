@@ -61,8 +61,7 @@ namespace Godot.Serialization.Specialized
             
             Type itemType = enumerableType.GenericTypeArguments[0];
             Type listType = typeof(List<>).MakeGenericType(itemType);
-            object enumerable = base.Deserialize(node, listType);
-            return typeof(IEnumerableExtensions).GetMethod("Copy")!.MakeGenericMethod(itemType).Invoke(null, new[] {enumerable,})!;
+            return base.Deserialize(node, listType);
         }
     }
 }
