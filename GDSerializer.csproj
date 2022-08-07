@@ -8,7 +8,7 @@
         <!-- Workaround as Godot does not know how to properly load NuGet packages -->
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <PackageVersion>1.1.0</PackageVersion>
+        <PackageVersion>2.0.0</PackageVersion>
         <Title>GDSerializer</Title>
         <Authors>Carnagion</Authors>
         <Description>An XML (de)serialization framework for Godot's C# API.</Description>
@@ -16,7 +16,7 @@
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Carnagion.MoreLinq" Version="1.3.0"/>
+        <PackageReference Include="Carnagion.MoreLinq" Version="1.4.0"/>
         <PackageReference Include="System.CodeDom" Version="6.0.0"/>
     </ItemGroup>
     <ItemGroup>
