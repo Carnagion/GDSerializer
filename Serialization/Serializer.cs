@@ -274,7 +274,7 @@ namespace Godot.Serialization
                     continue;
                 }
                 XmlNode node = context.CreateElement(property.Name);
-                this.Serialize(value, property.PropertyType).ChildNodes
+                this.Serialize(value, value.GetType()).ChildNodes
                     .Cast<XmlNode>()
                     .ForEach(child => node.AppendChild(context.ImportNode(child, true)));
                 yield return (node, property);
@@ -289,7 +289,7 @@ namespace Godot.Serialization
                     continue;
                 }
                 XmlNode node= context.CreateElement(field.Name);
-                this.Serialize(value, field.FieldType).ChildNodes
+                this.Serialize(value, value.GetType()).ChildNodes
                     .Cast<XmlNode>()
                     .ForEach(child => node.AppendChild(context.ImportNode(child, true)));
                 yield return (node, field);
@@ -320,7 +320,7 @@ namespace Godot.Serialization
                     {
                         throw new SerializationException(child, $"Attempted to deserialize non-deserializable property {property.Name} in {type.GetDisplayName()}");
                     }
-                    deserialized.Add((this.Deserialize(child, property.PropertyType), property));
+                    deserialized.Add((this.Deserialize(child, child.GetTypeToDeserialize() ?? property.PropertyType), property));
                     continue;
                 }
                 
@@ -332,7 +332,7 @@ namespace Godot.Serialization
                     {
                         throw new SerializationException(child, $"Attempted to deserialize non-deserializable field {field.Name} in {type.GetDisplayName()}");
                     }
-                    deserialized.Add((this.Deserialize(child, field.FieldType), field));
+                    deserialized.Add((this.Deserialize(child, child.GetTypeToDeserialize() ?? field.FieldType), field));
                     continue;
                 }
                 
@@ -345,7 +345,8 @@ namespace Godot.Serialization
                 .Where(pair => pair.Item2 is not null && pair.Item2.Serializable)
                 .Select(pair => pair.member)
                 .ToArray();
-            if (toDeserialize.Any() && !toDeserialize.All(deserialized.Select(pair => pair.Item2).Contains))
+            HashSet<MemberInfo> deserializedMembers = deserialized.Select(pair => pair.Item2).ToHashSet();
+            if (toDeserialize.Any() && !toDeserialize.All(deserializedMembers.Contains))
             {
                 throw new SerializationException(node, $"One or more mandatory properties or fields of {type.GetDisplayName()} were not deserialized");
             }
