@@ -103,7 +103,6 @@ namespace Godot.Serialization
                 && property.CanWrite
                 && !property.GetIndexParameters().Any()
                 && property.GetCustomAttribute<CompilerGeneratedAttribute>() is null
-                && property.GetMethod.GetCustomAttribute<CompilerGeneratedAttribute>() is null
                 && !Serializer.forbiddenTypes.Contains(property.PropertyType)
                 && (property.GetCustomAttribute<SerializeAttribute>()?.Serializable ?? true);
         }
@@ -135,7 +134,6 @@ namespace Godot.Serialization
             try
             {
                 XmlNode element;
-                
                 // Use a more specialized serializer if possible
                 if (this.TryGetSpecialSerializerForType(type, out ISerializer? serializer))
                 {
@@ -144,8 +142,7 @@ namespace Godot.Serialization
                 else
                 {
                     XmlDocument context = new();
-                    
-                    element = context.CreateElement("Instance");
+                    element = context.CreateElement("Object");
                     ((XmlElement)element).SetAttribute("Type", type.GetDisplayName().XMLEscape());
                     
                     // Serialize fields and properties
@@ -261,11 +258,21 @@ namespace Godot.Serialization
                 {
                     continue;
                 }
-                XmlNode node = context.CreateElement(property.Name);
-                this.Serialize(value, value.GetType()).ChildNodes
+                
+                XmlElement element = context.CreateElement(property.Name);
+                
+                XmlNode serialized = this.Serialize(value, value.GetType());
+                string? typeAttribute = serialized.Attributes?["Type"]?.InnerText;
+                if (typeAttribute is not null)
+                {
+                    element.SetAttribute("Type", typeAttribute);
+                }
+                
+                serialized.ChildNodes
                     .Cast<XmlNode>()
-                    .ForEach(child => node.AppendChild(context.ImportNode(child, true)));
-                yield return (node, property);
+                    .ForEach(child => element.AppendChild(context.ImportNode(child, true)));
+                
+                yield return (element, property);
             }
             
             // Recursively serialize fields
@@ -276,11 +283,21 @@ namespace Godot.Serialization
                 {
                     continue;
                 }
-                XmlNode node= context.CreateElement(field.Name);
-                this.Serialize(value, value.GetType()).ChildNodes
+                
+                XmlElement element = context.CreateElement(field.Name);
+                
+                XmlNode serialized = this.Serialize(value, value.GetType());
+                string? typeAttribute = serialized.Attributes?["Type"]?.InnerText;
+                if (typeAttribute is not null)
+                {
+                    element.SetAttribute("Type", typeAttribute);
+                }
+                
+                serialized.ChildNodes
                     .Cast<XmlNode>()
-                    .ForEach(child => node.AppendChild(context.ImportNode(child, true)));
-                yield return (node, field);
+                    .ForEach(child => element.AppendChild(context.ImportNode(child, true)));
+
+                yield return (element, field);
             }
         }
         
