@@ -143,7 +143,7 @@ namespace Godot.Serialization
                 {
                     XmlDocument context = new();
                     element = context.CreateElement("Object");
-                    ((XmlElement)element).SetAttribute("Type", type.GetDisplayName().XMLEscape());
+                    ((XmlElement)element).SetAttribute("Type", type.GetDisplayName());
                     
                     // Serialize fields and properties
                     this.SerializeMembers(instance, type).ForEach(pair => element.AppendChild(context.ImportNode(pair.Item1, true)));
