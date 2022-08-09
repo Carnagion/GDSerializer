@@ -37,7 +37,7 @@ namespace Godot.Serialization.Specialized
             
             XmlDocument context = new();
             
-            XmlElement element = context.CreateElement("Instance");
+            XmlElement element = context.CreateElement("Node");
             element.SetAttribute("Type", nodeType.GetDisplayName().XMLEscape());
             
             Serializer defaultSerializer = (Serializer)this.ItemSerializer;
