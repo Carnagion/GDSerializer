@@ -144,7 +144,7 @@ namespace Godot.Serialization
                 else
                 {
                     XmlDocument context = new();
-                
+                    
                     // Use the "Type" attribute if generic or nested type as ` and + are not allowed as XML node names
                     if (type.IsGenericType)
                     {
@@ -160,7 +160,7 @@ namespace Godot.Serialization
                     {
                         element = context.CreateElement(type.GetDisplayName());
                     }
-                
+                    
                     this.SerializeMembers(instance, type).ForEach(pair => element.AppendChild(context.ImportNode(pair.Item1, true)));
                 }
                 

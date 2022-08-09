@@ -53,9 +53,8 @@ namespace Godot.Serialization.Specialized
             {
                 element = context.CreateElement(nodeType.GetDisplayName());
             }
-
-            Serializer defaultSerializer = (Serializer)this.ItemSerializer;
             
+            Serializer defaultSerializer = (Serializer)this.ItemSerializer;
             defaultSerializer.SerializeMembers(nodeInstance, nodeType).ForEach(pair => element.AppendChild(context.ImportNode(pair.Item1, true)));
             
             if (nodeInstance.GetChildCount() is 0)
@@ -90,7 +89,7 @@ namespace Godot.Serialization.Specialized
             {
                 node.RemoveChild(childrenElement);
             }
-
+            
             Serializer defaultSerializer = (Serializer)this.ItemSerializer;
             
             object instance = Activator.CreateInstance(nodeType, true) ?? throw new SerializationException(node, $"Unable to instantiate {nodeType.GetDisplayName()}");
