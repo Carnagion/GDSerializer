@@ -132,10 +132,10 @@ namespace Godot.Serialization
         {
             type ??= instance.GetType();
             
-            XmlNode element;
-            
             try
             {
+                XmlNode element;
+                
                 // Use a more specialized serializer if possible
                 if (this.TryGetSpecialSerializerForType(type, out ISerializer? serializer))
                 {
@@ -145,22 +145,10 @@ namespace Godot.Serialization
                 {
                     XmlDocument context = new();
                     
-                    // Use the "Type" attribute if generic or nested type as ` and + are not allowed as XML node names
-                    if (type.IsGenericType)
-                    {
-                        element = context.CreateElement("Generic");
-                        ((XmlElement)element).SetAttribute("Type", type.GetDisplayName().XMLEscape());
-                    }
-                    else if (type.IsNested)
-                    {
-                        element = context.CreateElement("Nested");
-                        ((XmlElement)element).SetAttribute("Type", type.GetDisplayName().XMLEscape());
-                    }
-                    else
-                    {
-                        element = context.CreateElement(type.GetDisplayName());
-                    }
+                    element = context.CreateElement("Instance");
+                    ((XmlElement)element).SetAttribute("Type", type.GetDisplayName().XMLEscape());
                     
+                    // Serialize fields and properties
                     this.SerializeMembers(instance, type).ForEach(pair => element.AppendChild(context.ImportNode(pair.Item1, true)));
                 }
                 
