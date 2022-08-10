@@ -103,7 +103,6 @@ namespace Godot.Serialization
                 && property.CanWrite
                 && !property.GetIndexParameters().Any()
                 && property.GetCustomAttribute<CompilerGeneratedAttribute>() is null
-                && property.GetMethod.GetCustomAttribute<CompilerGeneratedAttribute>() is null
                 && !Serializer.forbiddenTypes.Contains(property.PropertyType)
                 && (property.GetCustomAttribute<SerializeAttribute>()?.Serializable ?? true);
         }
@@ -132,10 +131,9 @@ namespace Godot.Serialization
         {
             type ??= instance.GetType();
             
-            XmlNode element;
-            
             try
             {
+                XmlNode element;
                 // Use a more specialized serializer if possible
                 if (this.TryGetSpecialSerializerForType(type, out ISerializer? serializer))
                 {
@@ -144,23 +142,10 @@ namespace Godot.Serialization
                 else
                 {
                     XmlDocument context = new();
-                
-                    // Use the "Type" attribute if generic or nested type as ` and + are not allowed as XML node names
-                    if (type.IsGenericType)
-                    {
-                        element = context.CreateElement("Generic");
-                        ((XmlElement)element).SetAttribute("Type", type.GetDisplayName().XMLEscape());
-                    }
-                    else if (type.IsNested)
-                    {
-                        element = context.CreateElement("Nested");
-                        ((XmlElement)element).SetAttribute("Type", type.GetDisplayName().XMLEscape());
-                    }
-                    else
-                    {
-                        element = context.CreateElement(type.GetDisplayName());
-                    }
-                
+                    element = context.CreateElement("Object");
+                    ((XmlElement)element).SetAttribute("Type", type.GetDisplayName());
+                    
+                    // Serialize fields and properties
                     this.SerializeMembers(instance, type).ForEach(pair => element.AppendChild(context.ImportNode(pair.Item1, true)));
                 }
                 
@@ -273,11 +258,21 @@ namespace Godot.Serialization
                 {
                     continue;
                 }
-                XmlNode node = context.CreateElement(property.Name);
-                this.Serialize(value, property.PropertyType).ChildNodes
+                
+                XmlElement element = context.CreateElement(property.Name);
+                
+                XmlNode serialized = this.Serialize(value, value.GetType());
+                string? typeAttribute = serialized.Attributes?["Type"]?.InnerText;
+                if (typeAttribute is not null)
+                {
+                    element.SetAttribute("Type", typeAttribute);
+                }
+                
+                serialized.ChildNodes
                     .Cast<XmlNode>()
-                    .ForEach(child => node.AppendChild(context.ImportNode(child, true)));
-                yield return (node, property);
+                    .ForEach(child => element.AppendChild(context.ImportNode(child, true)));
+                
+                yield return (element, property);
             }
             
             // Recursively serialize fields
@@ -288,11 +283,21 @@ namespace Godot.Serialization
                 {
                     continue;
                 }
-                XmlNode node= context.CreateElement(field.Name);
-                this.Serialize(value, field.FieldType).ChildNodes
+                
+                XmlElement element = context.CreateElement(field.Name);
+                
+                XmlNode serialized = this.Serialize(value, value.GetType());
+                string? typeAttribute = serialized.Attributes?["Type"]?.InnerText;
+                if (typeAttribute is not null)
+                {
+                    element.SetAttribute("Type", typeAttribute);
+                }
+                
+                serialized.ChildNodes
                     .Cast<XmlNode>()
-                    .ForEach(child => node.AppendChild(context.ImportNode(child, true)));
-                yield return (node, field);
+                    .ForEach(child => element.AppendChild(context.ImportNode(child, true)));
+
+                yield return (element, field);
             }
         }
         
@@ -320,7 +325,7 @@ namespace Godot.Serialization
                     {
                         throw new SerializationException(child, $"Attempted to deserialize non-deserializable property {property.Name} in {type.GetDisplayName()}");
                     }
-                    deserialized.Add((this.Deserialize(child, property.PropertyType), property));
+                    deserialized.Add((this.Deserialize(child, child.GetTypeToDeserialize() ?? property.PropertyType), property));
                     continue;
                 }
                 
@@ -332,7 +337,7 @@ namespace Godot.Serialization
                     {
                         throw new SerializationException(child, $"Attempted to deserialize non-deserializable field {field.Name} in {type.GetDisplayName()}");
                     }
-                    deserialized.Add((this.Deserialize(child, field.FieldType), field));
+                    deserialized.Add((this.Deserialize(child, child.GetTypeToDeserialize() ?? field.FieldType), field));
                     continue;
                 }
                 
@@ -345,7 +350,8 @@ namespace Godot.Serialization
                 .Where(pair => pair.Item2 is not null && pair.Item2.Serializable)
                 .Select(pair => pair.member)
                 .ToArray();
-            if (toDeserialize.Any() && !toDeserialize.All(deserialized.Select(pair => pair.Item2).Contains))
+            HashSet<MemberInfo> deserializedMembers = deserialized.Select(pair => pair.Item2).ToHashSet();
+            if (toDeserialize.Any() && !toDeserialize.All(deserializedMembers.Contains))
             {
                 throw new SerializationException(node, $"One or more mandatory properties or fields of {type.GetDisplayName()} were not deserialized");
             }

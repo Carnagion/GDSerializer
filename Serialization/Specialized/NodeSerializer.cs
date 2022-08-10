@@ -37,25 +37,10 @@ namespace Godot.Serialization.Specialized
             
             XmlDocument context = new();
             
-            // Use the "Type" attribute if generic or nested type as ` and + are not allowed as XML node names
-            XmlElement element;
-            if (nodeType.IsGenericType)
-            {
-                element = context.CreateElement("Generic");
-                element.SetAttribute("Type", nodeType.GetDisplayName().XMLEscape());
-            }
-            else if (nodeType.IsNested)
-            {
-                element = context.CreateElement("Nested");
-                element.SetAttribute("Type", nodeType.GetDisplayName().XMLEscape());
-            }
-            else
-            {
-                element = context.CreateElement(nodeType.GetDisplayName());
-            }
-
-            Serializer defaultSerializer = (Serializer)this.ItemSerializer;
+            XmlElement element = context.CreateElement("Node");
+            element.SetAttribute("Type", nodeType.GetDisplayName());
             
+            Serializer defaultSerializer = (Serializer)this.ItemSerializer;
             defaultSerializer.SerializeMembers(nodeInstance, nodeType).ForEach(pair => element.AppendChild(context.ImportNode(pair.Item1, true)));
             
             if (nodeInstance.GetChildCount() is 0)
@@ -90,7 +75,7 @@ namespace Godot.Serialization.Specialized
             {
                 node.RemoveChild(childrenElement);
             }
-
+            
             Serializer defaultSerializer = (Serializer)this.ItemSerializer;
             
             object instance = Activator.CreateInstance(nodeType, true) ?? throw new SerializationException(node, $"Unable to instantiate {nodeType.GetDisplayName()}");

@@ -39,7 +39,7 @@ namespace Godot.Serialization.Specialized
             
             XmlDocument context = new();
             XmlElement arrayElement = context.CreateElement("Array");
-            arrayElement.SetAttribute("Type", $"{itemType.GetDisplayName().XMLEscape()}[]");
+            arrayElement.SetAttribute("Type", $"{itemType.GetDisplayName()}[]");
             this.SerializeItems(instance, itemType).ForEach(node => arrayElement.AppendChild(context.ImportNode(node, true)));
             return arrayElement;
         }
