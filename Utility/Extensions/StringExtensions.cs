@@ -11,6 +11,8 @@ namespace Godot.Utility.Extensions
     /// </summary>
     public static class StringExtensions
     {
+        private static readonly Dictionary<string, Type> cachedTypes = new();
+        
         /// <summary>
         /// Searches for a <see cref="Type"/> whose C# display name matches <paramref name="typeName"/>.
         /// </summary>
@@ -18,6 +20,11 @@ namespace Godot.Utility.Extensions
         /// <returns>The corresponding <see cref="Type"/>, or <see langword="null"/> if none was found.</returns>
         public static Type? Typeof(this string typeName)
         {
+            if (StringExtensions.cachedTypes.TryGetValue(typeName, out Type? type))
+            {
+                return type;
+            }
+            
             Regex typeNameRegex = new(@"^(?<name>[a-zA-Z0-9_\.]+)(<(?<parameters>[a-zA-Z0-9_,\s\<\>\[\]\.]*)>)?(\[(?<array>[\s,]*)\])?$", RegexOptions.Compiled);
             
             Match match = typeNameRegex.Match(typeName);
@@ -56,10 +63,15 @@ namespace Godot.Utility.Extensions
         
         private static Type? FindType(string typeName)
         {
-            return AppDomain.CurrentDomain.GetAssemblies()
+            Type? type = AppDomain.CurrentDomain.GetAssemblies()
                 .Distinct()
                 .SelectMany(assembly => assembly.GetTypes())
-                .FirstOrDefault(type => type.GetDisplayName() == typeName);
+                .FirstOrDefault(otherType => otherType.GetDisplayName() == typeName);
+            if (type is not null)
+            {
+                StringExtensions.cachedTypes[typeName] = type;
+            }
+            return type;
         }
         
         private static string GetArrayElementTypeName(string typeName)
