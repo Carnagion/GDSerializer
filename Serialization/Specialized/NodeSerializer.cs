@@ -98,6 +98,7 @@ namespace Godot.Serialization.Specialized
                 this.DeserializeItems(childrenElement, typeof(Node))
                     .Cast<Node>()
                     .ForEach(child => nodeInstance.AddChild(child));
+                node.AppendChild(childrenElement);
             }
             
             return instance;
