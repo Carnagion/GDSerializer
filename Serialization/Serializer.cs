@@ -46,6 +46,7 @@ namespace Godot.Serialization
                 {typeof(IEnumerable<>), new EnumerableSerializer(this)},
                 {typeof(Vector2), Serializer.vector},
                 {typeof(Vector3), Serializer.vector},
+                {typeof(Resource), new ResourceSerializer()},
                 {typeof(Enum), new EnumSerializer()},
                 {typeof(Type), new TypeSerializer()},
                 {typeof(XmlNode), new XmlNodeSerializer()},
