@@ -1,14 +1,12 @@
-<Project Sdk="Godot.NET.Sdk/3.3.0">
+﻿<Project Sdk="Godot.NET.Sdk/4.0.0">
     <PropertyGroup>
-        <TargetFramework>netstandard2.1</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <RootNamespace>Godot</RootNamespace>
         <LangVersion>default</LangVersion>
         <Nullable>enable</Nullable>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <!-- Workaround as Godot does not know how to properly load NuGet packages -->
-        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <PackageVersion>2.0.3</PackageVersion>
+        <PackageVersion>3.0.0</PackageVersion>
         <Title>GDSerializer</Title>
         <Authors>Carnagion</Authors>
         <Description>An XML (de)serialization framework for Godot's C# API.</Description>
@@ -16,13 +14,13 @@
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Carnagion.MoreLinq" Version="1.4.0"/>
-        <PackageReference Include="System.CodeDom" Version="6.0.0"/>
+        <PackageReference Include="Carnagion.MoreLinq" Version="1.4.0" />
+        <PackageReference Include="System.CodeDom" Version="6.0.0" />
     </ItemGroup>
     <ItemGroup>
-        <Content Include=".gitignore"/>
-        <Content Include="LICENSE"/>
-        <Content Include="README.md"/>
-        <None Include="LICENSE" Pack="true" PackagePath=""/>
+        <Content Include=".gitignore" />
+        <Content Include="LICENSE" />
+        <Content Include="README.md" />
+        <None Include="LICENSE" Pack="true" PackagePath="" />
     </ItemGroup>
 </Project>

@@ -32,11 +32,11 @@ namespace Godot.Serialization.Specialized
             {
                 case Vector2 vector2:
                     XmlElement element2 = context.CreateElement(typeof(Vector2).GetDisplayName());
-                    element2.AppendChild(context.CreateTextNode($"({vector2.x}, {vector2.y})"));
+                    element2.AppendChild(context.CreateTextNode($"({vector2.X}, {vector2.Y})"));
                     return element2;
                 case Vector3 vector3:
                     XmlElement element3 = context.CreateElement(typeof(Vector3).GetDisplayName());
-                    element3.AppendChild(context.CreateTextNode($"({vector3.x}, {vector3.y}, {vector3.z})"));
+                    element3.AppendChild(context.CreateTextNode($"({vector3.X}, {vector3.Y}, {vector3.Z})"));
                     return element3;
                 default:
                     throw new SerializationException(instance, $"\"{instance.GetType().GetDisplayName()}\" cannot be serialized by {typeof(VectorSerializer).GetDisplayName()}");
