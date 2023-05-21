@@ -6,7 +6,6 @@
         <Nullable>enable</Nullable>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 		<PackageVersion>3.0.0</PackageVersion>
         <Title>GDSerializer</Title>
         <Authors>Carnagion</Authors>
